@@ -2,13 +2,15 @@
 
 # Build artifacts (Tauri / Rust)
 src-tauri/target/
-src-tauri/Cargo.lock
+# Cargo.lock SHOULD be committed for binary projects (pinning deps for reproducible CI builds)
+# src-tauri/Cargo.lock  ← removed from gitignore
 *.exe
 *.msi
 *.dmg
 
 # Node / npm
 node_modules/
+# package-lock.json gardé en gitignore (commit only Cargo.lock)
 package-lock.json
 npm-debug.log
 

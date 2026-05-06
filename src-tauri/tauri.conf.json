@@ -53,12 +53,13 @@
     },
     "plugins": {
         "updater": {
-            "active": true,
-            "dialog": true,
             "endpoints": [
                 "https://github.com/metacovix-byte/LuxePOS-Web/releases/latest/download/latest.json"
             ],
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEEzNkU5N0VFN0QwNUQ2QgpSV1JyWGREbmZ1azJDa251SndsR1IvZ0dQbGJXb2xxMHlrbjRxNU8wVW9jV3BIRDJPeS84eXJ6RAo="
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEEzNkU5N0VFN0QwNUQ2QgpSV1JyWGREbmZ1azJDa251SndsR1IvZ0dQbGJXb2xxMHlrbjRxNU8wVW9jV3BIRDJPeS84eXJ6RAo=",
+            "windows": {
+                "installMode": "passive"
+            }
         }
     }
 }
