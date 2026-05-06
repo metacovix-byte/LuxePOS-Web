@@ -1,0 +1,31 @@
+{
+    "appId": "ch.luxepos.app",
+    "appName": "LuxePOS",
+    "webDir": "dist-web",
+    "bundledWebRuntime": false,
+    "server": {
+        "androidScheme": "https",
+        "iosScheme": "luxepos",
+        "cleartext": false
+    },
+    "plugins": {
+        "Filesystem": {
+            "iosScheme": "luxepos"
+        },
+        "Preferences": {
+            "group": "ch.luxepos.app"
+        }
+    },
+    "android": {
+        "buildOptions": {
+            "keystorePath": null,
+            "keystorePassword": null,
+            "keystoreAlias": null,
+            "keystoreAliasPassword": null,
+            "releaseType": "AAB"
+        }
+    },
+    "ios": {
+        "scheme": "LuxePOS"
+    }
+}

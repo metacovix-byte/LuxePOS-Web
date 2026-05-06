@@ -1,0 +1,39 @@
+[package]
+name = "luxepos"
+version = "5.14.9"
+description = "LuxePOS — Caisse & gestion de bijouterie artisanale (Suisse)"
+authors = ["Maëlle"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "luxepos_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-process = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+# v5.14 — Chiffrement OneDrive backup (AES-GCM 256, clé locale machine)
+aes-gcm = "0.10"
+rand = "0.8"
+base64 = "0.22"
+
+# Profile release : optimisations équilibrées
+# strip = false : Rust nightly + strip = STATUS_STACK_BUFFER_OVERRUN au démarrage sur Win64
+# lto = false : nightly + LTO = crash compilateur (déjà constaté)
+[profile.release]
+panic = "abort"
+codegen-units = 16
+lto = false
+opt-level = 2
+strip = false
+debug = false

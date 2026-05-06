@@ -1,0 +1,54 @@
+{
+  "name": "LuxePOS — Bijouterie",
+  "short_name": "LuxePOS",
+  "description": "Gestion de bijouterie · Caisse, stock, clients et commandes Instagram/WhatsApp",
+  "start_url": "./luxepos-final.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "lang": "fr-CH",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Vendre",
+      "short_name": "Vendre",
+      "description": "Encaisser une vente",
+      "url": "./luxepos-final.html#pos"
+    },
+    {
+      "name": "Catalogue",
+      "short_name": "Stock",
+      "description": "Voir l'inventaire",
+      "url": "./luxepos-final.html#inventory"
+    },
+    {
+      "name": "Commandes DM",
+      "short_name": "DM",
+      "description": "Commandes Instagram/WhatsApp",
+      "url": "./luxepos-final.html#orders"
+    }
+  ]
+}

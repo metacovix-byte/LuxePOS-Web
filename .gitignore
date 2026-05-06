@@ -1,0 +1,57 @@
+# LuxePOS — .gitignore
+
+# Build artifacts (Tauri / Rust)
+src-tauri/target/
+src-tauri/Cargo.lock
+*.exe
+*.msi
+*.dmg
+
+# Node / npm
+node_modules/
+package-lock.json
+npm-debug.log
+
+# Capacitor build output
+android/app/build/
+android/build/
+android/.gradle/
+ios/App/build/
+ios/Pods/
+
+# Tests
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Local env / secrets
+.env
+.env.local
+src-tauri/luxepos-data*.json
+src-tauri/backups/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# LuxePOS specifics
+luxepos-final.html.bak-*
+inline-vendors.js
+repair-html.js
+check-html.js
+http-server.log
+http-server.err
+
+# Excel sources (ne pas committer les vraies ventes)
+Z0.\ VENTES\ 2026.xlsx
+Z0.\ STOCK\ 2026/
+
+# Photos produits (lourd, chacun a son set local)
+photo-map.json
