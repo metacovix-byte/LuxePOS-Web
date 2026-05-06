@@ -77,7 +77,8 @@
       "PowerShell(Copy-Item -Force luxepos-final.html dist-web\\\\luxepos-final.html)",
       "PowerShell(Copy-Item -Force luxepos-final.html dist-web\\\\index.html)",
       "PowerShell($f = Get-Item dist-web\\\\luxepos-final.html; \"Size: $\\($f.Length\\) bytes ; Modified: $\\($f.LastWriteTime\\)\")",
-      "PowerShell(Invoke-WebRequest -Uri \"https://cdn.tailwindcss.com/3.4.16\" -OutFile \"dist-web\\\\vendor\\\\tailwindcss-3.4.16.js\" -UseBasicParsing; Invoke-WebRequest -Uri \"https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js\" -OutFile \"dist-web\\\\vendor\\\\lucide-0.460.0.min.js\" -UseBasicParsing; Get-ChildItem dist-web\\\\vendor | Format-Table Name, @{N='KB';E={[math]::Round\\($_.Length/1KB,1\\)}})"
+      "PowerShell(Invoke-WebRequest -Uri \"https://cdn.tailwindcss.com/3.4.16\" -OutFile \"dist-web\\\\vendor\\\\tailwindcss-3.4.16.js\" -UseBasicParsing; Invoke-WebRequest -Uri \"https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js\" -OutFile \"dist-web\\\\vendor\\\\lucide-0.460.0.min.js\" -UseBasicParsing; Get-ChildItem dist-web\\\\vendor | Format-Table Name, @{N='KB';E={[math]::Round\\($_.Length/1KB,1\\)}})",
+      "PowerShell(npx --yes @tauri-apps/cli signer generate -w \"$env:USERPROFILE\\\\.tauri\\\\luxepos.key\" --ci 2>&1 | Select-Object -Last 25)"
     ]
   }
 }

@@ -4419,11 +4419,32 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
             return typeof window.__TAURI_INTERNALS__ !== 'undefined' || typeof window.__TAURI__ !== 'undefined';
         }
 
+        /** v5.14.11 — Détection Capacitor (Android/iOS) pour bridge mobile. */
+        _isCapacitor() {
+            return typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform?.();
+        }
+
         async _diskBridgeSave(body) {
             if (this._isTauri()) {
                 const invoke = window.__TAURI__?.core?.invoke || window.__TAURI_INTERNALS__?.invoke;
                 if (!invoke) throw new Error('Tauri invoke unavailable');
                 return await invoke('save_data', { payload: body });
+            }
+            // v5.14.11 — Bridge Capacitor (Android/iOS) via @capacitor/filesystem
+            if (this._isCapacitor()) {
+                try {
+                    const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                    await Filesystem.writeFile({
+                        path: 'luxepos-data.json',
+                        data: body,
+                        directory: Directory.Data,
+                        encoding: 'utf8'
+                    });
+                    return { ok: true, size: body.length, path: 'Capacitor.Data/luxepos-data.json' };
+                } catch (e) {
+                    window.LOG?.warn('Capacitor save failed', e);
+                    throw new Error('Capacitor save: ' + e.message);
+                }
             }
             const resp = await fetch('/api/save', {
                 method: 'POST',
@@ -4441,6 +4462,22 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                 const result = await invoke('load_data');
                 if (!result?.ok || !result?.data) return null;
                 return { rawJson: result.data, modified: result.modified };
+            }
+            // v5.14.11 — Bridge Capacitor load
+            if (this._isCapacitor()) {
+                try {
+                    const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                    const result = await Filesystem.readFile({
+                        path: 'luxepos-data.json',
+                        directory: Directory.Data,
+                        encoding: 'utf8'
+                    });
+                    return { rawJson: result.data, modified: null };
+                } catch (e) {
+                    // File not found = fresh install, OK
+                    window.LOG?.debug('Capacitor load: no existing data', e?.message);
+                    return null;
+                }
             }
             const resp = await fetch('/api/load', { cache: 'no-store' });
             if (!resp.ok) return null;

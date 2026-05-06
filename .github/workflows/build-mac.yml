@@ -1,10 +1,7 @@
 name: Build macOS app
 
 on:
-  workflow_dispatch:  # Manual trigger
-  push:
-    tags:
-      - 'v*'  # Auto-build on git tag (v5.14.10, v5.15.0, etc.)
+  workflow_dispatch:  # Manual trigger only (release.yml gère les tags v*)
 
 jobs:
   build-mac:

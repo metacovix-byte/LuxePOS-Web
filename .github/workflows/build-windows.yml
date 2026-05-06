@@ -1,10 +1,7 @@
 name: Build Windows app
 
 on:
-  workflow_dispatch:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:  # Manual trigger only (release.yml gère les tags v*)
 
 jobs:
   build-win:
