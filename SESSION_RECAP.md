@@ -1,6 +1,52 @@
 # 📝 Session du 2026-05-06 → reprise demain
 
-## 🎯 État actuel : v5.14.7 LIVRÉE (clean, propre, marche)
+## 🎯 État actuel : v5.14.10 LIVRÉE (audit design appliqué + git + CI ready)
+
+### 📦 Builds livrés cette session
+- **v5.14.7** : version propre (CDN inlinés, SW désactivé) — fin de soirée 1
+- **v5.14.8** : 5 priorités design audit appliquées (alertes stock, carte client, dashboard dédupliqué, chiffres faux cachés, polish)
+- **v5.14.9** : fix bouton Filtres inventaire (drawer `.open` class manquante)
+- **v5.14.10** : ux-copy harmonisé (tu/vous), boutons flottants nettoyés, design system documenté, git initialisé, workflows CI GitHub Actions prêts
+
+### ⚙️ Infra livrée v5.14.10
+- ✅ **Git initialisé** + 1er commit + 151 fichiers tracked
+- ✅ **`.gitignore`** complet (target/, node_modules/, données privées, photos, build artifacts)
+- ✅ **`.github/workflows/build-mac.yml`** — universal binary x64+arm64 sur push tag `v*`
+- ✅ **`.github/workflows/build-windows.yml`** — release Windows sur push tag `v*`
+- ✅ **`README.md`** — doc projet (stack, structure, build, tests, données)
+- ✅ **`DESIGN_SYSTEM.md`** — tokens, composants, conventions, audit cohérence
+- ✅ **`UPDATER_SETUP.md`** — guide pas-à-pas pour activer Tauri auto-updater (à activer après push GitHub)
+
+### 🎨 Audit design : 5 priorités validées + appliquées (depuis screenshots)
+
+| # | Priorité | Status | Impact |
+|---|---|---|---|
+| 1 | 🔴 Fausses alertes stock (Dernier!/293 stock faible) | ✅ | Composants vs uniques distingués partout |
+| 2 | 🔴 Carte Client dégonflée (6 boutons → 2 + kebab) | ✅ | -50% bruit visuel + avatar couleur déterministe |
+| 3 | 🟡 Dashboard dédupliqué (todo cost, CTA bas, Lumi auto-dismiss) | ✅ | 3 doublons retirés |
+| 4 | 🟡 Chiffres faux cachés (Valeur stock "à calculer", trend 1ère vente) | ✅ | Plus de "0 CHF" trompeur |
+| 5 | 🟢 Polish (placeholder photo gradient + initiale, bouton brand) | ✅ | Inventaire visuel-
+
+et + bouton client cohérent |
+
+### 🎨 UX-copy — harmonisations appliquées (skill `design:ux-copy`)
+- 7 messages "Veuillez..." formels → "tu" cohérent ("Donne un nom", "Ajoute une variante", "Sélectionne", "Choisis un client")
+- "Erreur lors de la sauvegarde locale" → "Sauvegarde locale échouée — vérifie l'espace disque"
+- "Erreur lors de l'export" → "Export impossible — réessaie ou contacte Claude"
+- "Le panier est vide" → "Ajoute au moins 1 article au panier"
+- "Valeur invalide" → "Saisis un nombre positif"
+- "Erreur de sérialisation des données" → message plus humain
+
+### ♿ A11y (skill `design:accessibility-review`)
+- Solide déjà : focus-visible WCAG 2.4.7, prefers-reduced-motion (3 endroits), aria-live sur toasts (assertive pour erreurs), skip-link, modes haute lisibilité + contraste max
+- Pas de changements nécessaires
+
+### 🎨 Design system (skill `design:design-system`)
+- Documenté dans `DESIGN_SYSTEM.md` : tokens (5 thèmes brand, bg/text, sémantique, espacement, radius, shadows), composants (.btn-2026, .glass-card, .stat-card-2026, .loyalty-badge, .badge-2026.*, toasts), typo (Inter Variable + Playfair display), animations
+- Tech debt identifié : 73 occurrences de `#10b981` hardcodé (au lieu de `var(--brand-main)`) — 30 min de fix + tests par thème, à faire un autre jour
+
+### 🐛 Bug bonus corrigé
+- **Bouton "Astuces" flottant retiré** : doublon avec Lumi + auto-show 12s. Astuces accessibles via Ctrl+K (palette de commandes). Nettoie le coin bas-droit.
 
 ### Ce qui s'est passé cette session
 1. **Audit Windows** demandé : 4 axes parallèles (design, UX, sécurité, perf) → rapport avec Niveau 1 (3 critiques) + Niveau 2 (5 confort)

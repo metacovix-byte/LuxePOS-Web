@@ -3593,14 +3593,14 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
         </div>
     </div>
 
-    <!-- Bouton flottant Tips -->
+    <!-- v5.14.10 — Bouton flottant Tips RETIRÉ (faisait doublon avec Lumi + auto-show 12s).
+         Les astuces restent accessibles via la palette de commandes (Ctrl+K). -->
     <button id="tips-toggle-btn"
             onclick="window.ui.toggleTips()"
-            class="btn-press"
-            data-tooltip="Astuces & Aide"
-            style="position:fixed; bottom:calc(88px + var(--sab)); left:50%; transform:translateX(-50%); z-index:199; background: var(--brand-main); color:white; border:none; border-radius:20px; padding:6px 14px; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px; box-shadow: 0 4px 16px rgba(16,185,129,0.4); cursor:pointer; transition: all 0.2s;">
-        <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>
-        <span>Astuces</span>
+            class="btn-press hidden"
+            aria-hidden="true"
+            tabindex="-1"
+            style="display:none;">
     </button>
 
     <!-- Bouton flottant Raccourcis clavier -->
@@ -4340,7 +4340,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                 serialized = JSON.stringify(this.state);
             } catch (error) {
                 window.LOG?.error('save-stringify', error);
-                window.ui?.toast?.('Erreur de sérialisation des données', 'error');
+                window.ui?.toast?.('Données impossibles à sauvegarder — contacte Claude si ça persiste', 'error');
                 return;
             }
             // Mémorise pour réutilisation par les couches asynchrones (IDB, disk)
@@ -4361,7 +4361,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                 if (error?.name === 'QuotaExceededError' || error?.code === 22) {
                     window.ui?.toast('⚠ Stockage local saturé — exportez vos données depuis Paramètres', 'error');
                 } else {
-                    window.ui?.toast('Erreur lors de la sauvegarde locale', 'error');
+                    window.ui?.toast('Sauvegarde locale échouée — vérifie l\'espace disque', 'error');
                 }
                 // On continue : on essaiera quand même IDB + disk
             }
@@ -6400,7 +6400,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
          */
         checkout() {
             if (this.state.cart.length === 0) {
-                window.ui?.toast('Le panier est vide', 'warning');
+                window.ui?.toast('Ajoute au moins 1 article au panier', 'warning');
                 return;
             }
 
@@ -6927,7 +6927,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                 this.logActivity('export', 'Export des ventes en CSV');
             } catch (error) {
                 console.error('Erreur export ventes:', error);
-                window.ui?.toast('Erreur lors de l\'export', 'error');
+                window.ui?.toast('Export impossible — réessaie ou contacte Claude', 'error');
             }
         }
 
@@ -6949,7 +6949,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                 this.logActivity('export', 'Export de l\'inventaire en CSV');
             } catch (error) {
                 console.error('Erreur export inventaire:', error);
-                window.ui?.toast('Erreur lors de l\'export', 'error');
+                window.ui?.toast('Export impossible — réessaie ou contacte Claude', 'error');
             }
         }
 
@@ -6972,7 +6972,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                 this.logActivity('export', 'Export des clients en CSV');
             } catch (error) {
                 console.error('Erreur export clients:', error);
-                window.ui?.toast('Erreur lors de l\'export', 'error');
+                window.ui?.toast('Export impossible — réessaie ou contacte Claude', 'error');
             }
         }
 
@@ -8736,7 +8736,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
             const input = document.getElementById('v48-monthly-target');
             if (!input) return;
             const v = parseFloat(input.value);
-            if (isNaN(v) || v < 0) { this.toast?.('Valeur invalide', 'error'); return; }
+            if (isNaN(v) || v < 0) { this.toast?.('Saisis un nombre positif', 'error'); return; }
             window.store.state.settings.monthlyTarget = v;
             window.store.save();
             this.toast?.(`Objectif défini à ${formatCurrency(v)}`);
@@ -15144,7 +15144,7 @@ service cloud.firestore {
                 // Vérifier que le total est correct
                 const sum = paymentMethods.reduce((s, p) => s + p.amount, 0);
                 if (Math.abs(sum - total) > 0.01) {
-                    this.toast('Le total des paiements ne correspond pas au montant dû', 'error');
+                    this.toast('Le total des paiements ne correspond pas au montant à payer', 'error');
                     return;
                 }
             }
@@ -15637,7 +15637,7 @@ service cloud.firestore {
             const colorHex = colorPicker.value;
 
             if (!colorName) {
-                this.toast('Veuillez entrer un nom pour la couleur', 'warning');
+                this.toast('Donne un nom à la couleur', 'warning');
                 return;
             }
 
@@ -15822,7 +15822,7 @@ service cloud.firestore {
                 const variants = variantsData ? JSON.parse(variantsData) : [];
 
                 if (variants.length === 0) {
-                    this.toast('Veuillez ajouter au moins une variante', 'error');
+                    this.toast('Ajoute au moins une variante', 'error');
                     return;
                 }
 
@@ -21331,7 +21331,7 @@ service cloud.firestore {
             const dateTo = document.getElementById('date-to').value;
 
             if (!dateFrom || !dateTo) {
-                this.toast('Veuillez sélectionner les deux dates', 'error');
+                this.toast('Sélectionne les deux dates', 'error');
                 return;
             }
 
@@ -21699,7 +21699,7 @@ ${template.message}
             const dateTo = document.getElementById('export-date-to')?.value;
 
             if (!dateFrom || !dateTo) {
-                this.toast('Veuillez sélectionner les dates', 'warning');
+                this.toast('Sélectionne d\'abord la période', 'warning');
                 return;
             }
 
@@ -21774,7 +21774,7 @@ ${template.message}
             const dateTo = document.getElementById('export-date-to')?.value;
 
             if (!dateFrom || !dateTo) {
-                this.toast('Veuillez sélectionner les dates', 'warning');
+                this.toast('Sélectionne d\'abord la période', 'warning');
                 return;
             }
 
@@ -22924,7 +22924,7 @@ ${template.message}
 
             const printWindow = window.open('', '_blank');
             if (!printWindow) {
-                this.toast('Veuillez autoriser les pop-ups pour imprimer', 'warning');
+                this.toast('Autorise les pop-ups pour imprimer', 'warning');
                 return;
             }
 
@@ -26484,7 +26484,7 @@ td{padding:12px;border-bottom:1px solid #eee}
 
         submitReservation() {
             const clientId = document.getElementById('res-client').value;
-            if (!clientId) { this.toast('Veuillez choisir un client', 'error'); return; }
+            if (!clientId) { this.toast('Choisis un client d\'abord', 'error'); return; }
             const client = window.store.state.clients.find(c => c.id === clientId);
             const items = [];
             document.querySelectorAll('.res-product-cb:checked').forEach(cb => {

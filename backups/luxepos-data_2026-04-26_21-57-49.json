@@ -1,0 +1,22 @@
+﻿{
+    "state":  {
+                  "sales":  [
+
+                            ],
+                  "products":  [
+                                   {
+                                       "price":  35,
+                                       "name":  "Bracelet test",
+                                       "id":  "test1",
+                                       "reference":  "B999"
+                                   }
+                               ],
+                  "clients":  [
+
+                              ]
+              },
+    "_meta":  {
+                  "savedAt":  "2026-04-26T21:57:48.9718636+02:00",
+                  "version":  "5.10"
+              }
+}
