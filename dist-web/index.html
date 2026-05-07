@@ -9870,6 +9870,58 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
         /**
          * Système de notification Toast
          */
+
+        /**
+         * v5.14.13 — Auto-updater Tauri. Vérifie GitHub Releases au démarrage,
+         * propose un dialog si une nouvelle version est dispo.
+         * @param {boolean} silent - Si true : pas de toast quand pas d'update (pour le check auto au boot)
+         */
+        async checkForUpdates(silent = false) {
+            // Ne tourne qu'en environnement Tauri
+            if (typeof window.__TAURI_INTERNALS__ === 'undefined' && typeof window.__TAURI__ === 'undefined') {
+                if (!silent) this.toast?.('Mises à jour disponibles uniquement dans l\'app Windows installée', 'info');
+                return;
+            }
+            const invoke = window.__TAURI__?.core?.invoke || window.__TAURI_INTERNALS__?.invoke;
+            if (!invoke) return;
+            try {
+                if (!silent) this.toast?.('🔄 Recherche de mises à jour…', 'info', 2000);
+                // Tauri 2 plugin updater : check
+                const update = await invoke('plugin:updater|check');
+                if (!update || (update && update.available === false)) {
+                    if (!silent) this.toast?.('✅ Tu es sur la dernière version', 'success', 4000);
+                    return;
+                }
+                const newVersion = update.version || update.latestVersion || update.available;
+                const currentVersion = update.currentVersion || 'inconnue';
+                // Confirm dialog
+                const confirmed = confirm(
+                    `Nouvelle version disponible : ${newVersion}\n` +
+                    `Tu utilises actuellement : ${currentVersion}\n\n` +
+                    `Veux-tu télécharger et installer la mise à jour maintenant ?\n` +
+                    `(L'app redémarrera automatiquement)`
+                );
+                if (!confirmed) {
+                    this.toast?.(`Mise à jour ${newVersion} disponible — relance l'app quand tu seras prête`, 'info', 6000);
+                    return;
+                }
+                this.toast?.(`📥 Téléchargement de ${newVersion}…`, 'info', 30000);
+                await invoke('plugin:updater|download_and_install');
+                // Si on arrive ici, c'est que ça n'a pas redémarré tout seul
+                this.toast?.(`✅ Mise à jour installée — redémarre l'app pour finaliser`, 'success', 8000);
+            } catch (e) {
+                window.LOG?.warn('checkForUpdates', e);
+                if (!silent) this.toast?.(`Erreur mise à jour : ${e.message || e}`, 'error', 8000);
+            }
+        }
+
+        /** v5.14.13 — Check silencieux au démarrage (5s après boot pour ne pas gêner). */
+        _autoCheckUpdatesOnBoot() {
+            if (this._autoUpdateCheckDone) return;
+            this._autoUpdateCheckDone = true;
+            setTimeout(() => this.checkForUpdates(true), 5000);
+        }
+
         toast(message, type = 'info', duration) {
             // v5.8 — Durées adaptées au type (les erreurs restent 8s pour qu'on les lise)
             const defaultDurations = { success: 3000, info: 4000, warning: 6000, error: 8000 };
@@ -14077,6 +14129,25 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                                     style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
                                 <i data-lucide="gift" class="w-4 h-4 inline"></i> Voir les nouveautés v4.8
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- v5.14.13 — Mises à jour automatiques (Tauri updater) -->
+                    <div class="glass-panel p-8 rounded-2xl">
+                        <div class="flex items-center gap-3 border-b border-white/10 pb-4 mb-4">
+                            <div class="p-2 rounded-lg" style="background: rgba(16, 185, 129, 0.18);">
+                                <i data-lucide="download-cloud" class="w-5 h-5" style="color: var(--brand-main);"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-xl font-semibold">Mises à jour <span class="ml-2 text-[10px] px-1.5 py-0.5 rounded" style="background: rgba(16,185,129,0.25); color: var(--brand-main);">v5.14.13</span></h3>
+                                <div class="text-xs text-adaptive-tertiary mt-1">L'app vérifie automatiquement les nouvelles versions au démarrage. Tu peux aussi forcer une vérif maintenant.</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <button onclick="window.ui.checkForUpdates(false)" class="btn-2026 primary">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Vérifier les mises à jour
+                            </button>
+                            <span class="text-xs opacity-60">Source : GitHub Releases (signé, vérifié)</span>
                         </div>
                     </div>
 
@@ -28915,6 +28986,8 @@ Raccourci : <kbd style="padding:2px 6px; background:rgba(255,255,255,0.1); borde
         window.ui?.initContextHelp?.();
         // v5.8 — Footer "Sauvegardé il y a..."
         window.ui?.initSavedFooter?.();
+        // v5.14.13 — Auto-check des mises à jour Tauri 5s après boot (silencieux si rien)
+        window.ui?._autoCheckUpdatesOnBoot?.();
 
         // v5.8 — Handler Esc global : ferme la dernière modal ouverte
         document.addEventListener('keydown', (e) => {
