@@ -18296,6 +18296,9 @@ service cloud.firestore {
             for (const [cat, data] of byCategory) {
                 data.avgPrice = data.all.length > 0 ? Math.round(data.all.reduce((a, p) => a + (p.price || 0), 0) / data.all.length) : 0;
                 data.suggested = this._suggestCostForCategory(cat, data.avgPrice);
+                // v5.14.12 — Valeur financière en jeu : somme(prix × stock) des pièces sans coût.
+                // Permet de prioritiser les catégories où la saisie a le plus d'impact économique.
+                data.financialImpact = data.noCost.reduce((acc, p) => acc + ((p.price || 0) * Math.max(p.stock || 0, 1)), 0);
             }
 
             const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -18326,12 +18329,19 @@ service cloud.firestore {
                                 ✨ Pré-remplir toutes les catégories avec les suggestions
                             </button>
                         </div>
-                        ${[...byCategory.entries()].sort((a, b) => b[1].all.length - a[1].all.length).map(([cat, data]) => `
-                            <div class="rounded-xl p-4" style="background: var(--bg-secondary); border: 1px solid var(--border-color);">
+                        ${[...byCategory.entries()].sort((a, b) => {
+                            // v5.14.12 — Tri par impact financier décroissant (catégories où la saisie a le plus de valeur).
+                            // Si égalité (toutes complètes), tri par nombre de pièces.
+                            if (b[1].financialImpact !== a[1].financialImpact) return b[1].financialImpact - a[1].financialImpact;
+                            return b[1].all.length - a[1].all.length;
+                        }).map(([cat, data], idx) => `
+                            <div class="rounded-xl p-4" style="background: var(--bg-secondary); border: 1px solid var(--border-color); ${idx === 0 && data.financialImpact > 0 ? 'box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4); position: relative;' : ''}">
+                                ${idx === 0 && data.financialImpact > 0 ? `<div style="position:absolute; top:-10px; left:12px; background:#f59e0b; color:white; font-size:0.65rem; font-weight:800; padding:3px 10px; border-radius:6px; letter-spacing:0.5px;">🎯 PRIORITÉ #1</div>` : ''}
                                 <div class="flex items-center justify-between mb-2 gap-3 flex-wrap">
                                     <div class="flex-1 min-w-0">
                                         <div class="font-semibold">${esc(cat)}</div>
                                         <div class="text-xs opacity-70 mt-0.5">${data.all.length} pièce${data.all.length > 1 ? 's' : ''} · prix moyen ${data.avgPrice} CHF · <strong style="color: ${data.noCost.length > 0 ? '#f59e0b' : '#10b981'};">${data.noCost.length} sans coût</strong>${data.suggested != null ? ` · <span style="color: #38bdf8;">suggestion ${data.suggested} CHF</span>` : ''}</div>
+                                        ${data.financialImpact > 0 ? `<div class="text-xs mt-1" style="color:#f59e0b;"><strong>${formatCurrency(data.financialImpact)}</strong> de stock à coûter</div>` : ''}
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <input type="number"
@@ -24289,19 +24299,36 @@ td{padding:12px;border-bottom:1px solid #eee}
         // ──────────────────────────────────────────────────────────────────
         initSavedFooter() {
             if (document.getElementById('saved-footer')) return;
-            const footer = document.createElement('div');
+            const footer = document.createElement('button');
             footer.id = 'saved-footer';
+            footer.title = 'Cliquer pour télécharger une sauvegarde .json';
+            footer.setAttribute('aria-label', 'Télécharger une sauvegarde maintenant');
             footer.style.cssText = `
                 position: fixed; bottom: 4px; left: 50%; transform: translateX(-50%);
-                z-index: 30; pointer-events: none;
-                font-size: 0.66rem; opacity: 0.4;
+                z-index: 30;
+                font-size: 0.66rem; opacity: 0.5;
                 color: var(--text-tertiary);
-                background: var(--bg-primary); padding: 2px 10px; border-radius: 999px;
+                background: var(--bg-primary); padding: 3px 12px; border-radius: 999px;
                 box-shadow: var(--shadow-xs);
                 font-variant-numeric: tabular-nums;
-                transition: opacity 0.3s;
+                transition: opacity 0.2s, transform 0.2s;
+                border: 1px solid var(--border-color);
+                cursor: pointer;
+                font-family: inherit;
             `;
-            footer.innerHTML = '💾 <span id="saved-footer-text">Initialisation…</span>';
+            // v5.14.12 — clickable pour téléchargement immédiat .json
+            footer.onclick = () => {
+                try {
+                    if (typeof this.exportBackupJSON === 'function') {
+                        this.exportBackupJSON();
+                    } else {
+                        this.toast?.('Export indisponible', 'error');
+                    }
+                } catch (e) { window.LOG?.warn('saved footer export', e); }
+            };
+            footer.onmouseenter = () => { footer.style.opacity = '1'; footer.style.transform = 'translateX(-50%) translateY(-2px)'; };
+            footer.onmouseleave = () => { footer.style.opacity = '0.5'; footer.style.transform = 'translateX(-50%) translateY(0)'; };
+            footer.innerHTML = '💾 <span id="saved-footer-text">Initialisation…</span> <span style="opacity:0.5;margin-left:6px;">↓ télécharger</span>';
             document.body.appendChild(footer);
             this._refreshSavedFooter();
             // Refresh toutes les 30 secondes pour mettre à jour le "il y a Xmin"
