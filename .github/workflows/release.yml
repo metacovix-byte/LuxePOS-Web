@@ -53,11 +53,12 @@ jobs:
           cp luxepos-final.html dist-web/index.html
 
       - name: Build Tauri (signed for updater)
+        id: tauri
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Pas de password car la clé a été générée sans password
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'LuxePOS ${{ github.ref_name }}'
@@ -66,3 +67,18 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
           updaterJsonPreferNsis: true
+
+      - name: Debug — list bundle artifacts
+        if: always()
+        shell: bash
+        run: |
+          echo "=== Bundle directory contents ==="
+          find src-tauri/target -name "*.sig" -o -name "*.exe" -o -name "*.dmg" -o -name "*.app.tar.gz" 2>/dev/null || echo "Nothing found"
+          echo "=== Signing key length ==="
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "Key is set (length: ${#TAURI_SIGNING_PRIVATE_KEY})"
+          else
+            echo "❌ Key is NOT set"
+          fi
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
