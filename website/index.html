@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Caisse, stock, Instagram et dépôt-vente : l'app native pensée pour les artisans bijou. Hors-ligne, chiffrée, sans abonnement.">
+    <meta name="theme-color" content="#10b981">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="LuxePOS — La caisse de mon atelier de bijoux">
+    <meta property="og:description" content="Vendre, suivre 500 pièces uniques, gérer dépôt-vente et DMs Instagram. Sans cloud opaque, sans abonnement.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://luxepos.app">
+
+    <title>LuxePOS — Caisse pour artisan bijou · Windows, Mac, Android</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;700;800&display=swap" rel="stylesheet">
+
+    <!-- JSON-LD Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "LuxePOS",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Windows, macOS, Android",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CHF"
+        },
+        "description": "Caisse native pour artisan bijou : vente, stock, dépôt-vente, Instagram, sans cloud opaque."
+    }
+    </script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <a href="#main" class="skip-link">Aller au contenu principal</a>
+
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="container nav-inner">
+            <a href="#" class="brand">
+                <span class="brand-mark"></span>
+                <span class="brand-text">LuxePOS</span>
+                <span class="brand-badge">bêta · v5.14.15</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Fonctions</a>
+                <a href="#how">Comment ça marche</a>
+                <a href="#stack">Sous le capot</a>
+                <a href="#faq">FAQ</a>
+                <a href="https://github.com/metacovix-byte/LuxePOS-Web" target="_blank" rel="noopener" class="github-link" aria-label="Voir le code sur GitHub">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.72.09-.72 1.2.08 1.83 1.23 1.83 1.23 1.08 1.85 2.81 1.31 3.5 1 .1-.78.42-1.31.76-1.61-2.66-.3-5.47-1.34-5.47-5.96 0-1.31.47-2.39 1.24-3.23-.12-.3-.54-1.53.12-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.77.84 1.24 1.92 1.24 3.23 0 4.63-2.81 5.65-5.49 5.95.43.37.81 1.1.81 2.22v3.29c0 .31.21.69.83.57A12 12 0 0 0 12 .3"/></svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main">
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="mesh-bg" aria-hidden="true"></div>
+            <div class="container hero-grid">
+                <div class="hero-text">
+                    <p class="kicker">Pour artisan bijou · Windows · Mac · Android</p>
+                    <h1>La caisse de mon <em>atelier de bijoux</em>.</h1>
+                    <p class="lede">
+                        Une seule app native pour vendre, suivre tes 500 pièces uniques, gérer tes DMs Instagram
+                        et tes points dépôt-vente. <strong>Hors-ligne. Chiffrée. Sans abonnement.</strong>
+                    </p>
+                    <div class="cta-row">
+                        <a href="https://github.com/metacovix-byte/LuxePOS-Web/releases/latest/download/LuxePOS_5.14.15_x64-setup.exe" class="btn btn-primary" download>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            Télécharger pour Windows
+                            <span class="btn-sub">3.4 Mo · v5.14.15</span>
+                        </a>
+                        <a href="https://github.com/metacovix-byte/LuxePOS-Web" target="_blank" rel="noopener" class="btn btn-ghost">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.72.09-.72 1.2.08 1.83 1.23 1.83 1.23 1.08 1.85 2.81 1.31 3.5 1 .1-.78.42-1.31.76-1.61-2.66-.3-5.47-1.34-5.47-5.96 0-1.31.47-2.39 1.24-3.23-.12-.3-.54-1.53.12-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.77.84 1.24 1.92 1.24 3.23 0 4.63-2.81 5.65-5.49 5.95.43.37.81 1.1.81 2.22v3.29c0 .31.21.69.83.57A12 12 0 0 0 12 .3"/></svg>
+                            Code source
+                        </a>
+                    </div>
+                    <p class="hero-meta">
+                        <span class="pill">✓ Gratuit pendant la bêta</span>
+                        <span class="pill">✓ Open source</span>
+                        <span class="pill">✓ Pas de tracking</span>
+                    </p>
+                </div>
+                <div class="hero-visual">
+                    <div class="app-mockup" role="img" aria-label="Aperçu du dashboard LuxePOS">
+                        <div class="mockup-titlebar">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                            <span class="mockup-title">LuxePOS — Bijouterie</span>
+                        </div>
+                        <div class="mockup-body">
+                            <div class="mockup-sidebar">
+                                <div class="sb-icon active">⌂</div>
+                                <div class="sb-icon">$</div>
+                                <div class="sb-icon">▣</div>
+                                <div class="sb-icon">◯</div>
+                                <div class="sb-icon">✦</div>
+                            </div>
+                            <div class="mockup-content">
+                                <p class="mock-date">6 mai 2026</p>
+                                <h3 class="mock-greeting">Bon après-midi <span class="sparkle">✨</span></h3>
+                                <div class="mock-banner">
+                                    <div class="mock-banner-icon">📈</div>
+                                    <div>
+                                        <div class="mock-banner-kicker">Rentabilité aveugle</div>
+                                        <div class="mock-banner-title">294 pièces sans coût</div>
+                                        <button class="mock-banner-cta">Saisir les coûts (5 min)</button>
+                                    </div>
+                                </div>
+                                <div class="mock-hero-cards">
+                                    <div class="mock-card mock-card-yellow">
+                                        <div class="mock-card-icon">⚡</div>
+                                        <div class="mock-card-title">Vente éclair</div>
+                                        <div class="mock-card-sub">3 taps : produit · client · paiement</div>
+                                    </div>
+                                    <div class="mock-card mock-card-blue">
+                                        <div class="mock-card-icon">📦</div>
+                                        <div class="mock-card-title">Ajouter au stock</div>
+                                        <div class="mock-card-sub">Une nouvelle pièce</div>
+                                    </div>
+                                    <div class="mock-card mock-card-pink">
+                                        <div class="mock-card-icon">💬</div>
+                                        <div class="mock-card-title">Répondre à un DM</div>
+                                        <div class="mock-card-sub">Instagram / WhatsApp</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- For whom -->
+        <section class="section" id="for-whom">
+            <div class="container">
+                <h2 class="section-title">Pour qui c'est fait</h2>
+                <p class="section-lede">Si tu te reconnais dans une de ces trois, l'app est pour toi.</p>
+                <div class="cards-row">
+                    <div class="persona-card">
+                        <div class="persona-emoji">💎</div>
+                        <h3>Artisan bijou</h3>
+                        <p>Tu fais des pièces uniques en acier 316L, perles, vintage. Tes ventes sont à la pièce, pas au stock reproductible.</p>
+                    </div>
+                    <div class="persona-card">
+                        <div class="persona-emoji">🏪</div>
+                        <h3>Dépôt-vente multi-points</h3>
+                        <p>Tu déposes chez 2-3 partenaires. Tu veux savoir qui a quoi, combien on te doit, à qui revient la commission.</p>
+                    </div>
+                    <div class="persona-card">
+                        <div class="persona-emoji">📱</div>
+                        <h3>Vendeur Instagram / WhatsApp</h3>
+                        <p>L'essentiel de tes ventes passe par DM. Tu veux suivre devis → paiement → expédition sans copier-coller.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="section section-tinted" id="features">
+            <div class="container">
+                <h2 class="section-title">Ce qui change vraiment</h2>
+                <p class="section-lede">Les outils génériques ne pensent pas comme un artisan. Voilà les 6 trucs qu'on a faits différemment.</p>
+                <div class="features-grid">
+                    <article class="feature">
+                        <span class="feature-icon">🎯</span>
+                        <h3>Pièces uniques natives</h3>
+                        <p>L'app sait qu'une pièce vendue n'est pas "en rupture" — c'est juste vendue. Plus d'alertes fantômes sur 290 produits.</p>
+                    </article>
+                    <article class="feature">
+                        <span class="feature-icon">🤝</span>
+                        <h3>Commissions dépôt-vente</h3>
+                        <p>Annemasse 30%, Salon 25%, Atelier 0%. C'est calculé automatiquement à chaque vente.</p>
+                    </article>
+                    <article class="feature">
+                        <span class="feature-icon">🔒</span>
+                        <h3>Backup OneDrive chiffré</h3>
+                        <p>AES-GCM 256, clé locale dans AppData. Si OneDrive est piraté, tes données restent illisibles.</p>
+                    </article>
+                    <article class="feature">
+                        <span class="feature-icon">🤖</span>
+                        <h3>Lumi, ton assistant local</h3>
+                        <p>21 commandes vocales et écrites, 3 personnalités au choix. Tourne sur ton PC. Pas une API distante.</p>
+                    </article>
+                    <article class="feature">
+                        <span class="feature-icon">💰</span>
+                        <h3>Wizard coûts intelligent</h3>
+                        <p>Suggestions par catégorie (collier ≈ 10 CHF, bague ≈ 4). Tri par impact financier. 5 min pour 500 pièces.</p>
+                    </article>
+                    <article class="feature">
+                        <span class="feature-icon">💬</span>
+                        <h3>Pipeline DM intégré</h3>
+                        <p>Reçu → Devis → Payé → Expédié → Livré. Preuve de paiement TWINT/Revolut + n° suivi Swiss Post.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- How it works -->
+        <section class="section" id="how">
+            <div class="container">
+                <h2 class="section-title">Comment ça marche</h2>
+                <p class="section-lede">3 étapes pour passer d'Excel à une vraie caisse.</p>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>Importe ton Excel</h3>
+                        <p>Drag-drop ton fichier. Le parseur reconnaît tes colonnes "Vendu le", "À qui", "Couleur", même si elles sont en désordre. Aucune perte.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>Saisis tes coûts en 5 min</h3>
+                        <p>Le wizard pré-remplit selon ta catégorie. Tu valides ou tu ajustes. Le tri commence par celle qui a le plus d'impact financier.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3>Vends, suis, comprends</h3>
+                        <p>Dashboard avec CA jour, panier moyen 7j, valeur stock. Au lieu de "↓100% vs hier" décourageant : "🌅 Première vente attendue".</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Under the hood -->
+        <section class="section section-dark" id="stack">
+            <div class="container">
+                <h2 class="section-title section-title-light">Sous le capot</h2>
+                <p class="section-lede section-lede-light">Transparence radicale. Tout est vérifiable.</p>
+                <div class="terminal" role="region" aria-label="Détails techniques">
+<pre>$ luxepos --about
+
+<span class="cmt"># Stack</span>
+runtime:          Tauri 2.11 + WebView2 (natif Windows)
+backend:          Rust stable 1.93 (memory-safe, zéro GC)
+frontend:         Vanilla JS ES6+ (pas de framework lourd)
+crypto:           AES-GCM 256 + minisign (signatures release)
+
+<span class="cmt"># Confidentialité</span>
+tracking:         <span class="ok">aucun</span> (pas de Google Analytics, pas de Sentry)
+serveur tiers:    <span class="ok">aucun</span> (sauf Firebase optionnel si tu veux)
+CDN runtime:      <span class="ok">aucun</span> (Tailwind + Lucide inlinés)
+télémétrie:       <span class="ok">aucune</span>
+
+<span class="cmt"># Données</span>
+local:            %APPDATA%\Roaming\ch.luxepos.desktop\
+backup OneDrive:  chiffré AES-GCM 256, clé locale jamais partagée
+export manuel:    .json à tout moment (clic sur le footer)
+import Excel:     parseur intelligent (8 feuilles, mapping auto)
+
+<span class="cmt"># Distribution</span>
+source:           github.com/metacovix-byte/LuxePOS-Web (public)
+releases:         signées cryptographiquement, vérifiées au démarrage
+auto-update:      GitHub Releases → app détecte → propose → installe
+tests:            31/34 Playwright passent (2 obsolètes ignorés)
+
+<span class="cmt"># Performance</span>
+démarrage:        &lt; 1 seconde
+RAM:              ~26 Mo (Chrome embarqué = ~250 Mo)
+taille install:   3.4 Mo (oui, vraiment)
+
+$ <span class="cursor">_</span></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing -->
+        <section class="section" id="pricing">
+            <div class="container container-narrow">
+                <h2 class="section-title">Combien ça coûte</h2>
+                <div class="price-card">
+                    <div class="price-badge">Bêta publique</div>
+                    <div class="price-amount">Gratuit</div>
+                    <div class="price-sub">jusqu'à la v6.0 (mi-2027 environ)</div>
+                    <ul class="price-features">
+                        <li>✓ Toutes les fonctions débloquées</li>
+                        <li>✓ Mises à jour automatiques signées</li>
+                        <li>✓ Backup OneDrive chiffré</li>
+                        <li>✓ Pas de limite de produits / clients / ventes</li>
+                        <li>✓ Pas de carte bancaire demandée</li>
+                    </ul>
+                    <p class="price-note">
+                        Le futur tarif sera autour de <strong>9 CHF/mois</strong> si tu veux soutenir le projet,
+                        mais une version gratuite restera disponible. Pas de bait-and-switch.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Roadmap -->
+        <section class="section section-tinted" id="roadmap">
+            <div class="container">
+                <h2 class="section-title">Feuille de route publique</h2>
+                <p class="section-lede">Pas de promesses, juste des étapes vraies.</p>
+                <ul class="roadmap">
+                    <li class="rm-item rm-done"><span class="rm-status">✅</span> <strong>Windows natif</strong> · v5.14.15 livré</li>
+                    <li class="rm-item rm-progress"><span class="rm-status">🚧</span> <strong>macOS universel</strong> · CI verte, manque tests Mac réel</li>
+                    <li class="rm-item rm-progress"><span class="rm-status">🚧</span> <strong>Android</strong> · Capacitor scaffold, build pending Android Studio</li>
+                    <li class="rm-item"><span class="rm-status">⏳</span> <strong>iOS</strong> · besoin Mac dev + 99$/an Apple</li>
+                    <li class="rm-item"><span class="rm-status">⏳</span> <strong>Multi-utilisateurs</strong> · rôle "vendeuse"</li>
+                    <li class="rm-item"><span class="rm-status">⏳</span> <strong>Scan code-barres natif</strong> · Capacitor BarcodeScanner</li>
+                    <li class="rm-item"><span class="rm-status">⏳</span> <strong>Facturation TVA suisse / française</strong> · si demande utilisateurs</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section class="section" id="faq">
+            <div class="container container-narrow">
+                <h2 class="section-title">Questions honnêtes</h2>
+                <div class="faq">
+                    <details>
+                        <summary>Est-ce que mes données sont à toi ?</summary>
+                        <p>Non. Tes données vivent dans <code>%APPDATA%\Roaming\ch.luxepos.desktop\</code> sur ton PC, et un miroir chiffré dans ton OneDrive personnel. Je n'ai aucun accès à rien. Pas de serveur tiers, pas de tracking.</p>
+                    </details>
+                    <details>
+                        <summary>Qu'est-ce qui se passe si je perds mon PC ?</summary>
+                        <p>Ton backup OneDrive est synchronisé automatiquement à chaque vente (chiffré AES-GCM 256). Tu installes l'app sur un nouveau PC, la clé de déchiffrement est ré-générée à partir d'un fichier que tu auras pris soin de sauvegarder. Tu pourras tout récupérer.</p>
+                    </details>
+                    <details>
+                        <summary>Pourquoi pas un abonnement comme Square ou Lightspeed ?</summary>
+                        <p>Parce que pour une artisane à 100 ventes/mois, payer 40-80€/mois c'est absurde. Et parce que je crois qu'on devrait pouvoir <em>posséder</em> ses outils, pas les louer à vie.</p>
+                    </details>
+                    <details>
+                        <summary>Et la TVA suisse / française ?</summary>
+                        <p>Mode "non-assujettie" par défaut (art. 10 LTVA, CA &lt; 100'000 CHF). Si tu dépasses le seuil, l'app calcule la TVA et l'imprime sur les factures. Multi-taux supporté (7.7% CH, 20% FR, etc.).</p>
+                    </details>
+                    <details>
+                        <summary>Je vends sur 3 lieux différents (atelier + 2 dépôts). Ça gère ?</summary>
+                        <p>Oui — c'est même un des trucs centraux. Tu déclares tes points (Atelier, Annemasse, Salon Genève), chaque produit est rattaché à un emplacement, les commissions par partenaire sont configurables, et un rapport mensuel te dit combien chacun te doit.</p>
+                    </details>
+                    <details>
+                        <summary>C'est compatible Mac ?</summary>
+                        <p>Le build Mac universel (Intel + Apple Silicon) est généré automatiquement par GitHub Actions à chaque release. Il fonctionne, mais n'a pas encore été testé par un vrai utilisateur Mac. Si tu veux être le premier, on est preneurs.</p>
+                    </details>
+                    <details>
+                        <summary>Et iPad / iPhone ?</summary>
+                        <p>Capacitor permet de faire iOS, mais la signature App Store nécessite un compte Apple Developer (99 $/an) + un Mac pour compiler. C'est sur la roadmap mais pas avant 2027.</p>
+                    </details>
+                    <details>
+                        <summary>L'assistant IA Lumi, c'est ChatGPT déguisé ?</summary>
+                        <p>Non. Lumi tourne 100% sur ton PC. C'est un parseur d'intentions par regex (21 commandes) + génération de réponses templated. Il connaît tes ventes, tes stocks, tes clients, et te répond instantanément sans appel réseau. Limité mais privé.</p>
+                    </details>
+                    <details>
+                        <summary>Pourquoi gratuit ?</summary>
+                        <p>Parce que je veux que le projet vive, et que la meilleure traction c'est l'usage réel. Le futur modèle économique sera transparent quand on en sera là.</p>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section class="section final-cta">
+            <div class="container container-narrow">
+                <h2>Prête à essayer ?</h2>
+                <p>3.4 Mo. Pas de carte bancaire. Pas d'email demandé. Tu désinstalles si ça te plaît pas.</p>
+                <a href="https://github.com/metacovix-byte/LuxePOS-Web/releases/latest/download/LuxePOS_5.14.15_x64-setup.exe" class="btn btn-primary btn-large" download>
+                    Télécharger LuxePOS pour Windows
+                </a>
+                <p class="small">macOS universel disponible sur la <a href="https://github.com/metacovix-byte/LuxePOS-Web/releases">page Releases</a></p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div class="footer-left">
+                <p><strong>LuxePOS</strong> · Fait à Genève par une artisane et son IA, avec amour et beaucoup de café ☕</p>
+                <p class="footer-meta">Pas de tracking · RGPD-friendly · Open source MIT</p>
+            </div>
+            <div class="footer-right">
+                <a href="https://github.com/metacovix-byte/LuxePOS-Web">GitHub</a>
+                <a href="https://github.com/metacovix-byte/LuxePOS-Web/blob/main/CHANGELOG.md">Changelog</a>
+                <a href="mailto:metacovix@gmail.com">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
