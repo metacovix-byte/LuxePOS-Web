@@ -42,9 +42,9 @@
     }
     </script>
 
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
     <!-- i18n charge avant le rendu pour appliquer la langue détectée -->
-    <script src="i18n.js?v=2"></script>
+    <script src="i18n.js?v=3"></script>
 </head>
 <body>
     <a href="#main" class="skip-link" data-i18n="nav.features">Aller au contenu principal</a>
@@ -174,8 +174,35 @@
             </div>
         </section>
 
+        <!-- Stats banner — chiffres réels d'usage -->
+        <section class="section stats-section">
+            <div class="container">
+                <p class="stats-kicker" data-i18n="stats.kicker">Données réelles d'usage</p>
+                <h2 class="section-title" data-i18n="stats.title">Ce que LuxePOS fait au quotidien</h2>
+                <p class="section-lede" data-i18n="stats.lede">Chiffres de l'atelier qui l'utilise en production depuis 6 mois.</p>
+                <div class="stats-grid">
+                    <div class="stat-tile">
+                        <div class="stat-tile-value" data-i18n="stats.s1Value">400+</div>
+                        <div class="stat-tile-label" data-i18n="stats.s1Label">pièces uniques cataloguées</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-tile-value" data-i18n="stats.s2Value">131</div>
+                        <div class="stat-tile-label" data-i18n="stats.s2Label">ventes ce mois</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-tile-value" data-i18n="stats.s3Value">27</div>
+                        <div class="stat-tile-label" data-i18n="stats.s3Label">clientes suivies</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-tile-value" data-i18n="stats.s4Value">31 CHF</div>
+                        <div class="stat-tile-label" data-i18n="stats.s4Label">panier moyen 7 jours</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- For whom -->
-        <section class="section" id="for-whom">
+        <section class="section section-tinted" id="for-whom">
             <div class="container">
                 <h2 class="section-title" data-i18n="forWhom.title">Pour qui c'est fait</h2>
                 <p class="section-lede" data-i18n="forWhom.lede">Si tu te reconnais dans une de ces trois, l'app est pour toi.</p>
@@ -200,7 +227,7 @@
         </section>
 
         <!-- Features -->
-        <section class="section section-tinted" id="features">
+        <section class="section" id="features">
             <div class="container">
                 <h2 class="section-title" data-i18n="features.title">Ce qui change vraiment</h2>
                 <p class="section-lede" data-i18n="features.lede">Les outils génériques ne pensent pas comme un artisan. Voilà les 6 trucs qu'on a faits différemment.</p>
@@ -264,8 +291,216 @@
             </div>
         </section>
 
+        <!-- Gallery — 4 mockups d'écrans -->
+        <section class="section section-tinted" id="gallery">
+            <div class="container">
+                <h2 class="section-title" data-i18n="gallery.title">Toutes les pages de l'app</h2>
+                <p class="section-lede" data-i18n="gallery.lede">Aperçu des 4 écrans principaux. Tout est jouable une fois installé.</p>
+                <div class="gallery-grid">
+                    <article class="gallery-item">
+                        <div class="gallery-mockup gallery-mockup-dashboard" aria-hidden="true">
+                            <div class="gmk-bar"><span></span><span></span><span></span></div>
+                            <div class="gmk-content">
+                                <div class="gmk-greeting">Bon après-midi ✨</div>
+                                <div class="gmk-banner-orange">
+                                    <strong>Rentabilité</strong>
+                                    <span>294 pièces sans coût</span>
+                                </div>
+                                <div class="gmk-cards-3">
+                                    <div class="gmk-card-y">⚡</div>
+                                    <div class="gmk-card-b">📦</div>
+                                    <div class="gmk-card-p">💬</div>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 data-i18n="gallery.t1">Dashboard</h3>
+                        <p data-i18n="gallery.d1">Vue d'ensemble du jour : CA, alertes, raccourcis 80% du flux</p>
+                    </article>
+
+                    <article class="gallery-item">
+                        <div class="gallery-mockup gallery-mockup-pos" aria-hidden="true">
+                            <div class="gmk-bar"><span></span><span></span><span></span></div>
+                            <div class="gmk-content">
+                                <div class="gmk-pos-grid">
+                                    <div class="gmk-product"><div class="gmk-product-img">💎</div><div class="gmk-product-price">35</div></div>
+                                    <div class="gmk-product"><div class="gmk-product-img">📿</div><div class="gmk-product-price">40</div></div>
+                                    <div class="gmk-product"><div class="gmk-product-img">🔗</div><div class="gmk-product-price">35</div></div>
+                                    <div class="gmk-product"><div class="gmk-product-img">💍</div><div class="gmk-product-price">25</div></div>
+                                    <div class="gmk-product"><div class="gmk-product-img">📿</div><div class="gmk-product-price">45</div></div>
+                                    <div class="gmk-product"><div class="gmk-product-img">💎</div><div class="gmk-product-price">30</div></div>
+                                </div>
+                                <div class="gmk-cart">Panier vide</div>
+                            </div>
+                        </div>
+                        <h3 data-i18n="gallery.t2">Catalogue & Vente</h3>
+                        <p data-i18n="gallery.d2">Grille produits, panier, paiement en 3 taps</p>
+                    </article>
+
+                    <article class="gallery-item">
+                        <div class="gallery-mockup gallery-mockup-inv" aria-hidden="true">
+                            <div class="gmk-bar"><span></span><span></span><span></span></div>
+                            <div class="gmk-content">
+                                <div class="gmk-inv-title">Inventaire <span>294 pièces</span></div>
+                                <div class="gmk-cat">
+                                    <div class="gmk-cat-dot" style="background:#ec4899;"></div>
+                                    <span>Bracelets · 103</span>
+                                </div>
+                                <div class="gmk-cat-grid">
+                                    <div class="gmk-cat-item">B</div>
+                                    <div class="gmk-cat-item">B</div>
+                                    <div class="gmk-cat-item">B</div>
+                                    <div class="gmk-cat-item plus">+99</div>
+                                </div>
+                                <div class="gmk-cat">
+                                    <div class="gmk-cat-dot" style="background:#0ea5e9;"></div>
+                                    <span>Colliers · 55</span>
+                                </div>
+                                <div class="gmk-cat-grid">
+                                    <div class="gmk-cat-item">C</div>
+                                    <div class="gmk-cat-item">C</div>
+                                    <div class="gmk-cat-item">C</div>
+                                    <div class="gmk-cat-item plus">+51</div>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 data-i18n="gallery.t3">Inventaire</h3>
+                        <p data-i18n="gallery.d3">294 pièces par catégorie, vue galerie ou tableau, import Excel</p>
+                    </article>
+
+                    <article class="gallery-item">
+                        <div class="gallery-mockup gallery-mockup-clients" aria-hidden="true">
+                            <div class="gmk-bar"><span></span><span></span><span></span></div>
+                            <div class="gmk-content">
+                                <div class="gmk-client">
+                                    <div class="gmk-client-av" style="background:linear-gradient(135deg,#a855f7,#ec4899);">AM</div>
+                                    <div class="gmk-client-info">
+                                        <div>Amie M.</div>
+                                        <small>2 achats · 70 CHF</small>
+                                    </div>
+                                </div>
+                                <div class="gmk-client">
+                                    <div class="gmk-client-av" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">Ch</div>
+                                    <div class="gmk-client-info">
+                                        <div>Chantal <span class="gmk-tier">🥉</span></div>
+                                        <small>33 achats · 1'065 CHF</small>
+                                    </div>
+                                </div>
+                                <div class="gmk-client">
+                                    <div class="gmk-client-av" style="background:linear-gradient(135deg,#10b981,#14b8a6);">Is</div>
+                                    <div class="gmk-client-info">
+                                        <div>Isley <span class="gmk-tier">🥉</span></div>
+                                        <small>31 achats · 870 CHF</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 data-i18n="gallery.t4">Clients</h3>
+                        <p data-i18n="gallery.d4">CRM léger, timeline, badges fidélité Bronze→Diamant</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonial Maëlle -->
+        <section class="section testimonial-section">
+            <div class="container container-narrow">
+                <p class="testimonial-kicker" data-i18n="testimonial.kicker">L'artisane qui l'utilise</p>
+                <blockquote class="testimonial-quote">
+                    <span class="quote-mark">"</span>
+                    <p data-i18n="testimonial.quote"><em>Avant LuxePOS, je faisais ma compta sur Excel le dimanche soir, en stress. Maintenant je vends pendant la semaine, et le dimanche je regarde un dashboard qui me dit déjà tout. C'est devenu mon vrai outil — pas un truc à apprendre, juste une extension de mon atelier.</em></p>
+                    <footer class="testimonial-attribution">
+                        <div class="testimonial-avatar">M</div>
+                        <div>
+                            <div class="testimonial-name" data-i18n="testimonial.attribution">Maëlle</div>
+                            <div class="testimonial-role" data-i18n="testimonial.role">Artisane bijoutière · Genève · utilise LuxePOS depuis novembre 2025</div>
+                        </div>
+                    </footer>
+                </blockquote>
+            </div>
+        </section>
+
+        <!-- Tableau comparatif -->
+        <section class="section section-tinted" id="compare">
+            <div class="container">
+                <h2 class="section-title" data-i18n="compare.title">LuxePOS vs les autres</h2>
+                <p class="section-lede" data-i18n="compare.lede">Comparaison honnête avec les 3 solutions les plus citées.</p>
+                <div class="compare-wrap">
+                    <table class="compare-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th class="col-luxe" data-i18n="compare.colLuxe">LuxePOS</th>
+                                <th data-i18n="compare.colSquare">Square</th>
+                                <th data-i18n="compare.colLightspeed">Lightspeed</th>
+                                <th data-i18n="compare.colShopify">Shopify POS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th data-i18n="compare.r1Label">Prix mensuel</th>
+                                <td class="col-luxe" data-i18n="compare.r1Luxe">Gratuit (beta)</td>
+                                <td data-i18n="compare.r1Square">0 € + 1.65%</td>
+                                <td data-i18n="compare.r1Lightspeed">69 €/mois</td>
+                                <td data-i18n="compare.r1Shopify">39 €/mois</td>
+                            </tr>
+                            <tr>
+                                <th data-i18n="compare.r2Label">Hors-ligne</th>
+                                <td class="col-luxe" data-i18n="compare.r2Luxe">✅ Total</td>
+                                <td data-i18n="compare.r2Square">❌</td>
+                                <td data-i18n="compare.r2Lightspeed">⚠️ Partiel</td>
+                                <td data-i18n="compare.r2Shopify">❌</td>
+                            </tr>
+                            <tr>
+                                <th data-i18n="compare.r3Label">Tes données t'appartiennent</th>
+                                <td class="col-luxe" data-i18n="compare.r3Luxe">✅ Local + OneDrive chiffré</td>
+                                <td data-i18n="compare.r3Square">❌ Serveurs Square</td>
+                                <td data-i18n="compare.r3Lightspeed">❌ Cloud Lightspeed</td>
+                                <td data-i18n="compare.r3Shopify">❌ Cloud Shopify</td>
+                            </tr>
+                            <tr>
+                                <th data-i18n="compare.r4Label">Pièces uniques nativement</th>
+                                <td class="col-luxe" data-i18n="compare.r4Luxe">✅</td>
+                                <td data-i18n="compare.r4Square">❌</td>
+                                <td data-i18n="compare.r4Lightspeed">⚠️ Workaround</td>
+                                <td data-i18n="compare.r4Shopify">❌</td>
+                            </tr>
+                            <tr>
+                                <th data-i18n="compare.r5Label">Multi-POS dépôt-vente</th>
+                                <td class="col-luxe" data-i18n="compare.r5Luxe">✅ Commissions auto</td>
+                                <td data-i18n="compare.r5Square">❌</td>
+                                <td data-i18n="compare.r5Lightspeed">✅ (plan Pro)</td>
+                                <td data-i18n="compare.r5Shopify">❌</td>
+                            </tr>
+                            <tr>
+                                <th data-i18n="compare.r6Label">Pipeline DM Instagram</th>
+                                <td class="col-luxe" data-i18n="compare.r6Luxe">✅ Intégré</td>
+                                <td data-i18n="compare.r6Square">❌</td>
+                                <td data-i18n="compare.r6Lightspeed">❌</td>
+                                <td data-i18n="compare.r6Shopify">Via app payante</td>
+                            </tr>
+                            <tr>
+                                <th data-i18n="compare.r7Label">Open source</th>
+                                <td class="col-luxe" data-i18n="compare.r7Luxe">✅ MIT</td>
+                                <td data-i18n="compare.r7Square">❌</td>
+                                <td data-i18n="compare.r7Lightspeed">❌</td>
+                                <td data-i18n="compare.r7Shopify">❌</td>
+                            </tr>
+                            <tr>
+                                <th data-i18n="compare.r8Label">Compte / carte bancaire requis</th>
+                                <td class="col-luxe" data-i18n="compare.r8Luxe">❌ Non</td>
+                                <td data-i18n="compare.r8Square">✅ Oui</td>
+                                <td data-i18n="compare.r8Lightspeed">✅ Oui</td>
+                                <td data-i18n="compare.r8Shopify">✅ Oui</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="compare-disclaimer" data-i18n="compare.disclaimer">Comparaison faite en mai 2026 sur la base des plans publics. Les concurrents ont aussi leurs forces (terminaux de paiement intégrés, multi-employés, e-commerce) — voir leur site.</p>
+            </div>
+        </section>
+
         <!-- Under the hood -->
-        <section class="section section-tinted" id="stack">
+        <section class="section" id="stack">
             <div class="container">
                 <h2 class="section-title" data-i18n="stack.title">Sous le capot</h2>
                 <p class="section-lede" data-i18n="stack.lede">Transparence radicale. Tout est vérifiable.</p>
@@ -420,6 +655,6 @@ $ <span class="cursor">_</span></pre>
         </div>
     </footer>
 
-    <script src="script.js?v=2" defer></script>
+    <script src="script.js?v=3" defer></script>
 </body>
 </html>
