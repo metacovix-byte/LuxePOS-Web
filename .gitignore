@@ -43,6 +43,13 @@ desktop.ini
 *.swp
 *~
 
+# Claude Code internals
+.claude/worktrees/
+.claude/projects/
+
+# Unrelated stray files
+revisions-*.html
+
 # LuxePOS specifics
 luxepos-final.html.bak-*
 inline-vendors.js
