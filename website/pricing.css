@@ -144,7 +144,7 @@
 .tier-amount {
     font-family: var(--font-display);
     font-size: clamp(2.4rem, 4.5vw, 3.4rem);
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1;
     letter-spacing: -0.02em;
     color: var(--text-primary);
@@ -158,7 +158,7 @@
 .tier-period {
     font-size: 0.95rem;
     color: var(--text-tertiary);
-    font-weight: 500;
+    font-weight: 400;
 }
 .tier-alt {
     font-size: 0.84rem;
@@ -167,7 +167,7 @@
 }
 .tier-alt strong {
     color: var(--brand-main);
-    font-weight: 700;
+    font-weight: 800;
 }
 .tier-tagline {
     color: var(--text-secondary);
@@ -193,7 +193,7 @@
 .tier-features li:last-child { border-bottom: none; }
 .tier-features li strong {
     color: var(--text-primary);
-    font-weight: 700;
+    font-weight: 800;
 }
 .tier-features li.tier-restriction {
     color: var(--text-tertiary);
@@ -205,7 +205,7 @@
     text-align: center;
     padding: 14px 20px;
     border-radius: var(--r-md);
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.96rem;
     text-decoration: none;
     transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
@@ -294,6 +294,9 @@
     height: 100%;
     background: linear-gradient(90deg, var(--brand-main), var(--accent));
     border-radius: 999px;
+    /* GPU-friendly : la largeur cible est portée par l'inline style, on anime via scaleX */
+    transform-origin: left center;
+    will-change: transform;
 }
 .why-math-detail {
     grid-column: 2;
@@ -353,7 +356,7 @@
     display: block;
     font-size: 1rem;
     color: var(--text-primary);
-    font-weight: 700;
+    font-weight: 800;
 }
 .cost-name span {
     display: block;
@@ -370,6 +373,9 @@
 .cost-fill {
     height: 100%;
     border-radius: 999px;
+    /* GPU-friendly : la largeur cible est portée par l'inline style, on anime via scaleX */
+    transform-origin: left center;
+    will-change: transform;
 }
 .cost-amount {
     text-align: right;
@@ -489,17 +495,20 @@
 
 /* ─────────────────────────────────────────────────────────────────────
    2 & 3 & 5. Barres animées (cost-fill + why-math-fill) au scroll
+   → animation GPU-friendly via transform: scaleX(), pas via width
+     (évite le reflow et passe sur le compositor thread)
    ───────────────────────────────────────────────────────────────────── */
 .cost-fill,
 .why-math-fill {
-    /* On capture la largeur cible depuis l'inline style via --target-width
-       en JS, et on anime de 0 vers la cible */
-    width: 0 !important;
-    transition: width 1.2s var(--ease);
+    /* La largeur cible reste celle de l'inline style ; on scale de 0 à 1.
+       Le parent .cost-bar / .why-math-bar a `overflow: hidden` donc rien
+       ne dépasse même si la transformation déborde. */
+    transform: scaleX(0);
+    transition: transform 1.2s var(--ease);
 }
 .cost-fill.is-filled,
 .why-math-fill.is-filled {
-    width: var(--target-width) !important;
+    transform: scaleX(1);
 }
 
 /* Count-up takeaway : effet subtil de lift + glow quand révélé */
@@ -577,13 +586,13 @@
     position: fixed;
     left: 16px;
     right: 16px;
-    bottom: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     z-index: 80;
     display: none;
     padding: 14px 20px;
     border-radius: 999px;
     text-align: center;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.95rem;
     text-decoration: none;
     color: white;
@@ -598,6 +607,9 @@
     transform: translateY(80px);
     transition: opacity 0.35s var(--ease), transform 0.4s var(--ease-spring);
     pointer-events: none;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
 }
 .sticky-cta-mobile.is-visible {
     opacity: 1;
@@ -610,7 +622,7 @@
     transform: translateY(-2px);
 }
 @media (max-width: 980px) {
-    .sticky-cta-mobile { display: block; }
+    .sticky-cta-mobile { display: inline-flex; }
 }
 /* Cache si reduce motion ou imprimé */
 @media print {
@@ -650,9 +662,10 @@ body::after {
     }
     .cost-fill,
     .why-math-fill {
-        /* On laisse à 100% de leur largeur originale d'inline style — JS
-           va simplement appliquer la classe `is-filled` instantanément */
+        /* On laisse à scale(1) (largeur originale d'inline style respectée)
+           — JS applique la classe `is-filled` instantanément, sans anim */
         transition: none !important;
+        transform: scaleX(1) !important;
     }
     .tier-card-featured .tier-badge-pro,
     .tier-card-featured .tier-badge-pro::before {

@@ -19,7 +19,27 @@ window.LUXEPOS_I18N = {
             stack: "Sous le capot",
             pricing: "Tarifs",
             faq: "FAQ",
-            github: "Voir le code sur GitHub"
+            github: "Voir le code sur GitHub",
+            skipLink: "Aller au contenu principal",
+            home: "LuxePOS — accueil",
+            langGroup: "Choisir la langue",
+            langFr: "Français",
+            langEn: "Anglais",
+            langDe: "Allemand",
+            langIt: "Italien"
+        },
+        a11y: {
+            heroMockup: "Aperçu du dashboard LuxePOS",
+            terminalRegion: "Détails techniques",
+            compareCaption: "Comparaison de LuxePOS avec Square, Lightspeed et Shopify POS"
+        },
+        platformCta: {
+            macTitle: "Télécharger pour macOS",
+            macSub: ".dmg · v5.14.15",
+            mobileTitle: "Bientôt sur mobile",
+            mobileSub: "en cours · suis sur GitHub",
+            linuxTitle: "Build Linux à venir",
+            linuxSub: "voir GitHub"
         },
         pricingPage: {
             kicker: "Tarifs · transparence radicale",
@@ -315,7 +335,8 @@ window.LUXEPOS_I18N = {
             r8Square: "✅ Oui",
             r8Lightspeed: "✅ Oui",
             r8Shopify: "✅ Oui",
-            disclaimer: "Comparaison faite en mai 2026 sur la base des plans publics. Les concurrents ont aussi leurs forces (terminaux de paiement intégrés, multi-employés, e-commerce) — voir leur site."
+            disclaimer: "Comparaison faite en mai 2026 sur la base des plans publics. Les concurrents ont aussi leurs forces (terminaux de paiement intégrés, multi-employés, e-commerce) — voir leur site.",
+            scrollHint: "← Glisse pour voir tous les concurrents →"
         },
         gallery: {
             title: "Toutes les pages de l'app",
@@ -345,7 +366,27 @@ window.LUXEPOS_I18N = {
             stack: "Under the hood",
             pricing: "Pricing",
             faq: "FAQ",
-            github: "View source on GitHub"
+            github: "View source on GitHub",
+            skipLink: "Skip to main content",
+            home: "LuxePOS — home",
+            langGroup: "Choose language",
+            langFr: "French",
+            langEn: "English",
+            langDe: "German",
+            langIt: "Italian"
+        },
+        a11y: {
+            heroMockup: "Preview of the LuxePOS dashboard",
+            terminalRegion: "Technical details",
+            compareCaption: "LuxePOS compared with Square, Lightspeed and Shopify POS"
+        },
+        platformCta: {
+            macTitle: "Download for macOS",
+            macSub: ".dmg · v5.14.15",
+            mobileTitle: "Mobile coming soon",
+            mobileSub: "in progress · follow on GitHub",
+            linuxTitle: "Linux build coming",
+            linuxSub: "see GitHub"
         },
         pricingPage: {
             kicker: "Pricing · radical transparency",
@@ -641,7 +682,8 @@ window.LUXEPOS_I18N = {
             r8Square: "✅ Yes",
             r8Lightspeed: "✅ Yes",
             r8Shopify: "✅ Yes",
-            disclaimer: "Comparison made in May 2026 based on public plans. Competitors also have strengths (integrated payment terminals, multi-employee, e-commerce) — see their websites."
+            disclaimer: "Comparison made in May 2026 based on public plans. Competitors also have strengths (integrated payment terminals, multi-employee, e-commerce) — see their websites.",
+            scrollHint: "← Swipe to see all competitors →"
         },
         gallery: {
             title: "All the app's pages",
@@ -671,7 +713,27 @@ window.LUXEPOS_I18N = {
             stack: "Unter der Haube",
             pricing: "Preise",
             faq: "FAQ",
-            github: "Quellcode auf GitHub"
+            github: "Quellcode auf GitHub",
+            skipLink: "Zum Hauptinhalt springen",
+            home: "LuxePOS — Startseite",
+            langGroup: "Sprache wählen",
+            langFr: "Französisch",
+            langEn: "Englisch",
+            langDe: "Deutsch",
+            langIt: "Italienisch"
+        },
+        a11y: {
+            heroMockup: "Vorschau des LuxePOS-Dashboards",
+            terminalRegion: "Technische Details",
+            compareCaption: "LuxePOS im Vergleich mit Square, Lightspeed und Shopify POS"
+        },
+        platformCta: {
+            macTitle: "Für macOS herunterladen",
+            macSub: ".dmg · v5.14.15",
+            mobileTitle: "Bald auf Mobile",
+            mobileSub: "in Arbeit · folgen auf GitHub",
+            linuxTitle: "Linux-Build kommt",
+            linuxSub: "siehe GitHub"
         },
         pricingPage: {
             kicker: "Preise · radikale Transparenz",
@@ -967,7 +1029,8 @@ window.LUXEPOS_I18N = {
             r8Square: "✅ Ja",
             r8Lightspeed: "✅ Ja",
             r8Shopify: "✅ Ja",
-            disclaimer: "Vergleich von Mai 2026 basierend auf öffentlichen Plänen. Wettbewerber haben auch ihre Stärken (integrierte Zahlungsterminals, Mehrbenutzer, E-Commerce) — siehe deren Websites."
+            disclaimer: "Vergleich von Mai 2026 basierend auf öffentlichen Plänen. Wettbewerber haben auch ihre Stärken (integrierte Zahlungsterminals, Mehrbenutzer, E-Commerce) — siehe deren Websites.",
+            scrollHint: "← Wischen, um alle Konkurrenten zu sehen →"
         },
         gallery: {
             title: "Alle Seiten der App",
@@ -997,7 +1060,27 @@ window.LUXEPOS_I18N = {
             stack: "Sotto il cofano",
             pricing: "Prezzi",
             faq: "FAQ",
-            github: "Codice su GitHub"
+            github: "Codice su GitHub",
+            skipLink: "Vai al contenuto principale",
+            home: "LuxePOS — home",
+            langGroup: "Scegli la lingua",
+            langFr: "Francese",
+            langEn: "Inglese",
+            langDe: "Tedesco",
+            langIt: "Italiano"
+        },
+        a11y: {
+            heroMockup: "Anteprima della dashboard LuxePOS",
+            terminalRegion: "Dettagli tecnici",
+            compareCaption: "LuxePOS a confronto con Square, Lightspeed e Shopify POS"
+        },
+        platformCta: {
+            macTitle: "Scarica per macOS",
+            macSub: ".dmg · v5.14.15",
+            mobileTitle: "Mobile in arrivo",
+            mobileSub: "in corso · segui su GitHub",
+            linuxTitle: "Build Linux in arrivo",
+            linuxSub: "vedi GitHub"
         },
         pricingPage: {
             kicker: "Prezzi · trasparenza radicale",
@@ -1293,7 +1376,8 @@ window.LUXEPOS_I18N = {
             r8Square: "✅ Sì",
             r8Lightspeed: "✅ Sì",
             r8Shopify: "✅ Sì",
-            disclaimer: "Confronto di maggio 2026 basato sui piani pubblici. I concorrenti hanno anche i loro punti forti (terminali di pagamento integrati, multi-dipendenti, e-commerce) — vedere i loro siti."
+            disclaimer: "Confronto di maggio 2026 basato sui piani pubblici. I concorrenti hanno anche i loro punti forti (terminali di pagamento integrati, multi-dipendenti, e-commerce) — vedere i loro siti.",
+            scrollHint: "← Scorri per vedere tutti i concorrenti →"
         },
         gallery: {
             title: "Tutte le pagine dell'app",

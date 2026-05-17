@@ -85,12 +85,24 @@ body::before {
         radial-gradient(ellipse 40% 30% at 90% 90%, rgba(236, 72, 153, 0.06), transparent 65%);
     animation: meshDrift 28s ease-in-out infinite alternate;
     pointer-events: none;
+    will-change: transform;
 }
 @keyframes meshDrift {
     0%   { transform: translate(0, 0) scale(1); }
     33%  { transform: translate(-4%, 2%) scale(1.05); }
     66%  { transform: translate(3%, -3%) scale(1.02); }
     100% { transform: translate(-2%, 4%) scale(1.04); }
+}
+/* ── Mobile : mesh statique (économie GPU significative sur low-end devices) ── */
+@media (max-width: 768px) {
+    body::before {
+        animation: none;
+        will-change: auto;
+        /* Simplifie le mesh : 2 layers au lieu de 4, moins coûteux à paint */
+        background:
+            radial-gradient(ellipse 70% 50% at 15% 20%, rgba(16, 185, 129, 0.12), transparent 65%),
+            radial-gradient(ellipse 60% 45% at 85% 80%, rgba(212, 165, 116, 0.08), transparent 65%);
+    }
 }
 
 img { max-width: 100%; display: block; }
@@ -100,14 +112,67 @@ a:hover { color: var(--text-primary); }
 .container { max-width: 1240px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 40px); }
 .container-narrow { max-width: 780px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 40px); }
 
-/* ── Skip link ── */
+/* ── Skip link (a11y WCAG 2.4.1) ── */
 .skip-link {
-    position: absolute; top: -100px; left: 0;
+    position: fixed; top: 0; left: 0;
+    transform: translateY(-110%);
     background: var(--brand-main); color: white;
-    padding: 8px 16px; z-index: 10000;
-    font-weight: 600;
+    padding: 12px 20px; z-index: 10000;
+    font-weight: 800;
+    border-radius: 0 0 var(--r-sm) 0;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.18s var(--ease-spring);
+    text-decoration: none;
 }
-.skip-link:focus { top: 0; }
+.skip-link:focus,
+.skip-link:focus-visible {
+    transform: translateY(0);
+    color: white;
+    outline: 3px solid #fff;
+    outline-offset: -3px;
+}
+
+/* ── Visually hidden mais accessible aux SR ── */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important; height: 1px !important;
+    padding: 0 !important; margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   FOCUS VISIBLE — WCAG 2.4.7 (anneau de focus cohérent sur tout le site)
+   ───────────────────────────────────────────────────────────────────── */
+:focus { outline: none; }
+:focus-visible {
+    outline: 2px solid var(--brand-main);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+.btn:focus-visible,
+.tier-cta:focus-visible,
+.sticky-cta-mobile:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 5px var(--brand-main);
+}
+.lang-switch button:focus-visible {
+    outline: 2px solid var(--brand-main);
+    outline-offset: 2px;
+}
+.faq summary:focus-visible {
+    outline: 2px solid var(--brand-main);
+    outline-offset: -2px;
+    border-radius: var(--r-md);
+}
+details summary:focus { outline: none; }
+details summary:focus-visible {
+    outline: 2px solid var(--brand-main);
+    outline-offset: -2px;
+}
 
 /* ─────────────────────────────────────────────────────────────────────
    NAV — glassmorphism strong (comme la sidebar de l'app)
@@ -153,8 +218,8 @@ a:hover { color: var(--text-primary); }
     font-size: 1.15rem;
 }
 .brand-badge {
-    font-size: 0.65rem; font-weight: 600;
-    padding: 3px 10px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 600;
+    padding: 4px 11px; border-radius: 999px;
     background: rgba(16, 185, 129, 0.18);
     color: var(--brand-main);
     border: 1px solid rgba(16, 185, 129, 0.3);
@@ -162,18 +227,26 @@ a:hover { color: var(--text-primary); }
 }
 .nav-links {
     display: flex; align-items: center; gap: clamp(16px, 3vw, 28px);
-    font-size: 0.92rem; font-weight: 500;
+    font-size: 0.92rem; font-weight: 400;
 }
-.nav-links a { color: var(--text-tertiary); }
+.nav-links a {
+    color: var(--text-tertiary);
+    /* WCAG 2.5.5 target size : padding implicite pour zone tactile ≥44px sur la hauteur */
+    padding: 12px 4px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
 .nav-links a:hover { color: var(--text-primary); }
 .github-link {
     display: flex; align-items: center; justify-content: center;
-    width: 38px; height: 38px; border-radius: 50%;
+    width: 44px; height: 44px; border-radius: 50%;
     background: var(--glass-bg);
     backdrop-filter: blur(10px);
     color: var(--text-primary);
     border: 1px solid var(--border-strong);
     transition: all 0.2s var(--ease-spring);
+    padding: 0;
 }
 .github-link:hover {
     background: rgba(16, 185, 129, 0.15);
@@ -206,15 +279,19 @@ a:hover { color: var(--text-primary); }
     border: none;
     background: transparent;
     color: var(--text-secondary);
-    padding: 7px 12px;
+    padding: 10px 14px;
     border-radius: 999px;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 800;
     font-family: inherit;
     letter-spacing: 0.04em;
     cursor: pointer;
     transition: background 0.15s, color 0.15s, transform 0.15s;
-    min-width: 36px;
+    min-width: 44px;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .lang-switch button:hover:not(.active) {
     color: var(--brand-main);
@@ -232,7 +309,8 @@ a:hover { color: var(--text-primary); }
 @media (max-width: 720px) {
     .nav-links a:not(.github-link) { display: none; }
     .brand-badge { display: none; }
-    .lang-switch button { padding: 6px 9px; font-size: 0.74rem; min-width: 32px; }
+    /* Garde 44px de zone tactile minimale même quand le visuel rétrécit */
+    .lang-switch button { padding: 8px 10px; font-size: 0.76rem; min-width: 40px; min-height: 38px; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -242,7 +320,7 @@ a:hover { color: var(--text-primary); }
     display: inline-flex; align-items: center; gap: 10px;
     padding: 14px 26px;
     border-radius: var(--r-md);
-    font-weight: 700; font-size: 0.95rem;
+    font-weight: 800; font-size: 0.95rem;
     font-family: inherit;
     border: none; cursor: pointer;
     transition: transform 0.2s var(--ease-spring), box-shadow 0.2s, background 0.15s;
@@ -274,7 +352,7 @@ a:hover { color: var(--text-primary); }
 }
 .btn-sub {
     display: block;
-    font-size: 0.7rem; font-weight: 500; opacity: 0.85;
+    font-size: 0.7rem; font-weight: 400; opacity: 0.85;
     margin-left: auto;
     padding-left: 12px;
     border-left: 1px solid rgba(255, 255, 255, 0.25);
@@ -300,7 +378,7 @@ a:hover { color: var(--text-primary); }
 
 .kicker {
     display: inline-flex; align-items: center; gap: 8px;
-    font-size: 0.72rem; font-weight: 700;
+    font-size: 0.72rem; font-weight: 800;
     color: var(--brand-main);
     text-transform: uppercase; letter-spacing: 0.14em;
     margin-bottom: 24px;
@@ -349,7 +427,7 @@ a:hover { color: var(--text-primary); }
 }
 .lede strong {
     color: var(--text-primary);
-    font-weight: 700;
+    font-weight: 800;
 }
 .cta-row {
     display: flex; flex-wrap: wrap; gap: 12px;
@@ -399,7 +477,7 @@ a:hover { color: var(--text-primary); }
 .mockup-title {
     margin-left: 10px;
     font-size: 0.75rem; color: var(--text-tertiary);
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .mockup-body {
@@ -496,7 +574,7 @@ a:hover { color: var(--text-primary); }
     margin-bottom: 2px;
 }
 .mock-banner-title {
-    font-weight: 700; font-size: 0.95rem;
+    font-weight: 800; font-size: 0.95rem;
     margin-bottom: 6px;
     color: var(--text-primary);
 }
@@ -504,7 +582,7 @@ a:hover { color: var(--text-primary); }
     background: linear-gradient(135deg, #f59e0b, #b85c3e);
     color: white; border: none;
     padding: 6px 14px; border-radius: 8px;
-    font-size: 0.72rem; font-weight: 700;
+    font-size: 0.72rem; font-weight: 800;
     cursor: pointer;
     font-family: inherit;
 }
@@ -542,7 +620,7 @@ a:hover { color: var(--text-primary); }
     padding: 10px 12px;
 }
 .mock-stat-label {
-    font-size: 0.6rem; font-weight: 700;
+    font-size: 0.6rem; font-weight: 800;
     color: var(--text-tertiary);
     text-transform: uppercase; letter-spacing: 0.05em;
     margin-bottom: 4px;
@@ -653,7 +731,7 @@ a:hover { color: var(--text-primary); }
     z-index: 1;
 }
 .persona-card h3 {
-    font-size: 1.25rem; font-weight: 700;
+    font-size: 1.25rem; font-weight: 800;
     margin-bottom: 8px;
     color: var(--text-primary);
     position: relative; z-index: 1;
@@ -661,6 +739,73 @@ a:hover { color: var(--text-primary); }
 .persona-card p {
     color: var(--text-secondary);
     position: relative; z-index: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DEMO LIVE — embed iframe section "Voir l'app en action"
+   ───────────────────────────────────────────────────────────────── */
+.demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 8px;
+}
+@media (max-width: 980px) {
+    .demo-grid { grid-template-columns: 1fr; }
+}
+.demo-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(22px) saturate(1.35);
+    -webkit-backdrop-filter: blur(22px) saturate(1.35);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-xl);
+    padding: 18px;
+    transition: transform 0.4s var(--ease), border-color 0.3s, box-shadow 0.3s;
+}
+.demo-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(16, 185, 129, 0.35);
+    box-shadow: var(--shadow-md);
+}
+.demo-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.demo-card-num {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: var(--brand-main);
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+.demo-card-header h3 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0;
+}
+.demo-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: var(--bg-primary);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+.demo-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
 }
 
 /* ── Features grid (style stat-card-2026) ── */
@@ -705,7 +850,7 @@ a:hover { color: var(--text-primary); }
     margin-bottom: 16px;
 }
 .feature h3 {
-    font-size: 1.1rem; font-weight: 700;
+    font-size: 1.1rem; font-weight: 800;
     margin-bottom: 8px;
     color: var(--text-primary);
 }
@@ -755,7 +900,7 @@ a:hover { color: var(--text-primary); }
     0%, 100% { transform: scale(1); opacity: 0.6; }
     50% { transform: scale(1.15); opacity: 0.2; }
 }
-.step h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); }
+.step h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; color: var(--text-primary); }
 .step p { color: var(--text-secondary); max-width: 320px; margin: 0 auto; }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -787,7 +932,7 @@ a:hover { color: var(--text-primary); }
     margin-top: 20px;
 }
 .terminal .cmt { color: #64748b; }
-.terminal .ok  { color: var(--brand-main); font-weight: 700; }
+.terminal .ok  { color: var(--brand-main); font-weight: 600; }
 .terminal .cursor {
     display: inline-block;
     width: 9px; height: 1.1em;
@@ -830,7 +975,7 @@ a:hover { color: var(--text-primary); }
 .price-amount {
     font-family: var(--font-display);
     font-size: clamp(3rem, 6vw, 4.5rem);
-    font-weight: 800;
+    font-weight: 700;
     margin: 12px 0 4px;
     background: linear-gradient(135deg, var(--brand-main), var(--accent));
     -webkit-background-clip: text;
@@ -918,7 +1063,7 @@ a:hover { color: var(--text-primary); }
     transform: translateY(-50%);
     width: 28px; height: 28px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.5rem; font-weight: 300;
+    font-size: 1.5rem; font-weight: 400;
     color: var(--brand-main);
     background: rgba(16, 185, 129, 0.12);
     border-radius: 50%;
@@ -999,7 +1144,7 @@ a:hover { color: var(--text-primary); }
 .stats-section { padding: clamp(60px, 8vh, 100px) 0; }
 .stats-kicker {
     text-align: center;
-    font-size: 0.74rem; font-weight: 700;
+    font-size: 0.74rem; font-weight: 800;
     color: var(--brand-main);
     text-transform: uppercase; letter-spacing: 0.14em;
     margin-bottom: 14px;
@@ -1044,7 +1189,7 @@ a:hover { color: var(--text-primary); }
 .stat-tile-value {
     font-family: var(--font-display);
     font-size: clamp(2.2rem, 4vw, 3.4rem);
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1;
     margin-bottom: 8px;
     background: linear-gradient(135deg, var(--brand-main), var(--accent));
@@ -1133,7 +1278,7 @@ a:hover { color: var(--text-primary); }
 }
 .gmk-banner-orange span {
     font-size: 0.85rem; color: var(--text-primary);
-    font-weight: 700;
+    font-weight: 800;
 }
 .gmk-cards-3 {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
@@ -1186,14 +1331,14 @@ a:hover { color: var(--text-primary); }
 
 /* Inventaire mockup */
 .gmk-inv-title {
-    font-weight: 700; font-size: 1rem;
+    font-weight: 800; font-size: 1rem;
     margin-bottom: 12px;
     color: var(--text-primary);
 }
 .gmk-inv-title span {
     font-size: 0.72rem;
     color: var(--text-tertiary);
-    font-weight: 500;
+    font-weight: 400;
     margin-left: 8px;
 }
 .gmk-cat {
@@ -1226,7 +1371,7 @@ a:hover { color: var(--text-primary); }
     background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.12));
     color: #c084fc;
     font-size: 0.74rem;
-    font-weight: 700;
+    font-weight: 800;
     font-family: var(--font-body);
 }
 
@@ -1259,7 +1404,7 @@ a:hover { color: var(--text-primary); }
     display: block;
     font-size: 0.66rem;
     color: var(--text-tertiary);
-    font-weight: 500;
+    font-weight: 400;
     margin-top: 2px;
 }
 .gmk-tier { font-size: 0.85rem; margin-left: 4px; }
@@ -1294,7 +1439,7 @@ a:hover { color: var(--text-primary); }
 .testimonial-section > * { position: relative; z-index: 1; }
 .testimonial-kicker {
     text-align: center;
-    font-size: 0.74rem; font-weight: 700;
+    font-size: 0.74rem; font-weight: 800;
     color: var(--accent);
     text-transform: uppercase; letter-spacing: 0.14em;
     margin-bottom: 20px;
@@ -1344,7 +1489,7 @@ a:hover { color: var(--text-primary); }
     flex-shrink: 0;
 }
 .testimonial-name {
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-primary);
     font-size: 1rem;
 }
@@ -1357,12 +1502,38 @@ a:hover { color: var(--text-primary); }
 /* ═══════════════════════════════════════════════════════════════════════
    COMPARE — tableau LuxePOS vs concurrents
    ═══════════════════════════════════════════════════════════════════════ */
+.compare-scroll-hint {
+    display: none;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    margin: -36px 0 16px;
+    font-style: italic;
+    letter-spacing: 0.02em;
+}
+@media (max-width: 760px) {
+    .compare-scroll-hint { display: block; }
+}
 .compare-wrap {
     max-width: 1100px;
     margin: 0 auto;
     overflow-x: auto;
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-md);
+    position: relative;
+    /* Fade lateral pour signaler le scroll horizontal mobile */
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+}
+.compare-wrap:focus-visible {
+    outline: 2px solid var(--brand-main);
+    outline-offset: 2px;
+}
+@media (max-width: 760px) {
+    .compare-wrap {
+        mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+    }
 }
 .compare-table {
     width: 100%;
@@ -1378,7 +1549,7 @@ a:hover { color: var(--text-primary); }
     background: rgba(15, 23, 42, 0.7);
     padding: 18px 16px;
     text-align: left;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.92rem;
     color: var(--text-secondary);
     border-bottom: 1px solid var(--border);
@@ -1436,4 +1607,22 @@ a:hover { color: var(--text-primary); }
     .cursor { animation: none; }
     .kicker::before { animation: none; }
     .step-number::before { animation: none; }
+    /* Annule l'effet "reveal au scroll" si JS l'a activé */
+    html.js-reveal-active .section,
+    html.js-reveal-active .feature,
+    html.js-reveal-active .persona-card,
+    html.js-reveal-active .step,
+    html.js-reveal-active .rm-item {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   PRINT — masquer les éléments interactifs et le sticky CTA
+   ───────────────────────────────────────────────────────────────────── */
+@media print {
+    .nav, .lang-switch, .skip-link, .sticky-cta-mobile,
+    .compare-scroll-hint, .github-link { display: none !important; }
+    body::before, body::after { display: none !important; }
 }
