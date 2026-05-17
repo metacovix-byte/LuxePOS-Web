@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LuxePOS — Démos animées</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand-main: #10b981;
+  --brand-dark: #059669;
+  --accent: #d4a574;
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --glass-bg: rgba(30, 41, 59, 0.65);
+  --glass-border: rgba(148, 163, 184, 0.15);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', Menlo, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  background: #050a14;
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: '';
+  position: fixed; inset: -20%;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 50% 40% at 15% 20%, rgba(16,185,129,0.15), transparent 65%),
+    radial-gradient(ellipse 45% 35% at 85% 30%, rgba(212,165,116,0.12), transparent 65%),
+    radial-gradient(ellipse 60% 50% at 50% 80%, rgba(16,185,129,0.08), transparent 65%);
+  animation: meshDrift 28s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes meshDrift {
+  0% { transform: translate(0,0) scale(1); }
+  100% { transform: translate(-3%, 4%) scale(1.04); }
+}
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 60px 32px 80px;
+}
+header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-weight: 800; letter-spacing: 0.02em;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+.brand .di {
+  width: 22px; height: 22px;
+  background: linear-gradient(135deg, var(--brand-main), var(--accent));
+  transform: rotate(45deg);
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.5);
+}
+h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 14px;
+}
+h1 em {
+  font-style: italic;
+  background: linear-gradient(135deg, var(--brand-main), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lede {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 640px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.demos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+  margin-top: 24px;
+}
+@media (min-width: 1280px) {
+  .demos { grid-template-columns: 1fr 1fr; gap: 32px; }
+}
+
+.demo {
+  background: var(--glass-bg);
+  backdrop-filter: blur(22px) saturate(1.35);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-xl);
+  padding: 22px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+  transition: border-color 0.3s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.demo:hover {
+  border-color: rgba(16,185,129,0.35);
+  transform: translateY(-4px);
+}
+.demo-h {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.demo-num {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--brand-main);
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.3);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.demo-time {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-tertiary);
+}
+.demo h2 {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 6px 0 12px;
+}
+.demo p {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+.frame-holder {
+  position: relative;
+  width: 100%;
+  /* 16:10 aspect ratio */
+  aspect-ratio: 16 / 10;
+  background: #000;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset;
+}
+.frame-holder iframe {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  border: 0;
+  background: var(--bg-primary);
+}
+.tags {
+  margin-top: 16px;
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.tag {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(15,23,42,0.6);
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.footer {
+  margin-top: 56px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+}
+.footer a {
+  color: var(--brand-main);
+  text-decoration: none;
+  font-weight: 600;
+}
+.footer a:hover { text-decoration: underline; }
+
+.usage {
+  margin-top: 56px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(22px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-xl);
+  padding: 32px 36px;
+}
+.usage h3 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+}
+.usage ul {
+  list-style: none;
+  display: grid; grid-template-columns: 1fr; gap: 14px;
+}
+@media (min-width: 720px) {
+  .usage ul { grid-template-columns: 1fr 1fr; }
+}
+.usage li {
+  display: flex; gap: 14px;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.usage li::before {
+  content: '◆';
+  color: var(--brand-main);
+  font-size: 0.7rem;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><span class="di"></span><span>LUXEPOS</span></div>
+      <h1>Vois l'app <em>en action</em></h1>
+      <p class="lede">Deux animations 1:1 avec l'interface réelle. Aucune installation, aucun screen recording — juste du HTML, CSS et SVG.</p>
+    </header>
+
+    <div class="demos">
+      <article class="demo">
+        <div class="demo-h">
+          <span class="demo-num">01</span>
+          <span class="demo-time">12 s · boucle infinie</span>
+        </div>
+        <h2>Une vente en 5 taps</h2>
+        <p>Du tableau de bord à l'encaissement, sans friction. Vente éclair, choix produit, association cliente, paiement — tout est là.</p>
+        <div class="frame-holder">
+          <iframe src="sale-flow.html" loading="lazy" title="Démo : une vente en 5 taps"></iframe>
+        </div>
+        <div class="tags">
+          <span class="tag">Vente éclair</span>
+          <span class="tag">CHF</span>
+          <span class="tag">TWINT · Revolut · Cash</span>
+          <span class="tag">Confetti</span>
+        </div>
+      </article>
+
+      <article class="demo">
+        <div class="demo-h">
+          <span class="demo-num">02</span>
+          <span class="demo-time">8 s · boucle infinie</span>
+        </div>
+        <h2>Import Excel intelligent</h2>
+        <p>Glisse ton .xlsx existant — LuxePOS reconnaît automatiquement les feuilles, catégories, prix, stocks et même l'historique de ventes.</p>
+        <div class="frame-holder">
+          <iframe src="inventory-import.html" loading="lazy" title="Démo : import Excel"></iframe>
+        </div>
+        <div class="tags">
+          <span class="tag">Drag &amp; drop</span>
+          <span class="tag">8 catégories</span>
+          <span class="tag">294 pièces</span>
+          <span class="tag">108 ventes</span>
+        </div>
+      </article>
+    </div>
+
+    <section class="usage">
+      <h3>À utiliser où ?</h3>
+      <ul>
+        <li>README du repo GitHub — convertis en GIF (15 fps suffisent) et embed via <code>![demo](demo.gif)</code></li>
+        <li>Press kit — capture une vidéo MP4 1280×800 via Puppeteer headless pour les journalistes</li>
+        <li>Posts Instagram — exporte en MP4 vertical 1080×1350 (carré) ou stories 1080×1920</li>
+        <li>Site marketing — embed direct via iframe, aucune dépendance, ~0 ko de JS</li>
+      </ul>
+    </section>
+
+    <div class="footer">
+      LuxePOS · Caisse pour artisans bijoutiers · Genève 🇨🇭 — Détails dans <a href="README.md">README.md</a>
+    </div>
+  </div>
+</body>
+</html>
