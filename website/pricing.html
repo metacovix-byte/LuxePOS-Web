@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="style.css?v=4">
-    <link rel="stylesheet" href="pricing.css?v=1">
+    <link rel="stylesheet" href="pricing.css?v=2">
     <script src="i18n.js?v=4"></script>
 </head>
 <body>
@@ -249,7 +249,7 @@
                 </div>
 
                 <div class="cost-takeaway">
-                    <strong data-i18n="pricingPage.compareTakeaway">Économise 720-880 CHF/an</strong>
+                    <strong data-i18n="pricingPage.compareTakeaway" data-countup>Économise 720-880 CHF/an</strong>
                     <span data-i18n="pricingPage.compareTakeawaySub">= 2 nuits dans un hôtel · ou ton stock d'or 18 carats pendant 6 mois</span>
                 </div>
             </div>
@@ -338,6 +338,198 @@
         </div>
     </footer>
 
+    <!-- Sticky CTA mobile (visible < 980px uniquement, masqué par défaut) -->
+    <a href="https://github.com/metacovix-byte/LuxePOS-Web/releases/latest/download/LuxePOS_5.14.15_x64-setup.exe"
+       class="sticky-cta-mobile"
+       id="stickyCtaMobile"
+       data-i18n="pricingPage.t1Cta"
+       download>Télécharger gratuitement</a>
+
     <script src="script.js?v=4" defer></script>
+
+    <!-- ── Pricing page : animations au scroll (vanilla, no deps) ── -->
+    <script>
+    (function () {
+        'use strict';
+
+        var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // ─── Cas "reduced motion" : on applique tout l'état "final" instantanément
+        if (prefersReduced) {
+            document.querySelectorAll('.tier-card, .cost-row, .why-math-row, .cost-takeaway')
+                .forEach(function (el) { el.classList.add('is-revealed'); });
+            document.querySelectorAll('.cost-fill, .why-math-fill').forEach(function (el) {
+                var w = el.style.width || '0%';
+                el.style.setProperty('--target-width', w);
+                el.classList.add('is-filled');
+            });
+            return;
+        }
+
+        if (!('IntersectionObserver' in window)) {
+            // Fallback ancien navigateur : tout visible direct
+            document.querySelectorAll('.tier-card, .cost-row, .why-math-row, .cost-takeaway')
+                .forEach(function (el) { el.classList.add('is-revealed'); });
+            document.querySelectorAll('.cost-fill, .why-math-fill').forEach(function (el) {
+                var w = el.style.width || '0%';
+                el.style.setProperty('--target-width', w);
+                el.classList.add('is-filled');
+            });
+            return;
+        }
+
+        // ─── 1. Tier cards : reveal séquentiel (CSS gère le delay via :nth-child)
+        var tierObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-revealed');
+                    tierObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('.tier-card').forEach(function (el) {
+            tierObserver.observe(el);
+        });
+
+        // ─── 5. Why-math rows : reveal + barres remplies
+        // On capture le width inline AVANT que le CSS le force à 0 (déjà appliqué
+        // par !important dans la règle), donc on lit l'attribut style original.
+        function captureTargetWidth(el) {
+            // L'inline style a déjà été parsé; on prend ce qui est dans el.style.width
+            // ou on le récupère depuis l'attribut style original via getAttribute.
+            var style = el.getAttribute('style') || '';
+            var m = style.match(/width\s*:\s*([0-9.]+%)/);
+            return m ? m[1] : '100%';
+        }
+        document.querySelectorAll('.why-math-fill, .cost-fill').forEach(function (el) {
+            var w = captureTargetWidth(el);
+            el.style.setProperty('--target-width', w);
+        });
+
+        var whyMathObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-revealed');
+                    var fill = entry.target.querySelector('.why-math-fill');
+                    if (fill) {
+                        // léger délai pour que le reveal soit visible avant le fill
+                        setTimeout(function () { fill.classList.add('is-filled'); }, 200);
+                    }
+                    whyMathObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.25, rootMargin: '0px 0px -30px 0px' });
+        document.querySelectorAll('.why-math-row').forEach(function (el) {
+            whyMathObserver.observe(el);
+        });
+
+        // ─── 3. Cost rows + cost-fill barres
+        var costObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-revealed');
+                    var fill = entry.target.querySelector('.cost-fill');
+                    if (fill) {
+                        setTimeout(function () { fill.classList.add('is-filled'); }, 250);
+                    }
+                    costObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.25, rootMargin: '0px 0px -30px 0px' });
+        document.querySelectorAll('.cost-row').forEach(function (el) {
+            costObserver.observe(el);
+        });
+
+        // ─── 2. Counter animé sur le takeaway "Économise X CHF/an"
+        // Le texte peut être traduit (i18n) → on extrait les chiffres au moment
+        // du déclenchement (post-i18n) plutôt que de hardcoder 720-880.
+        function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+        function animateCountUp(el, fullText) {
+            // Pattern: capture 1 ou 2 nombres dans le texte (ex "720-880" ou "720")
+            var matches = fullText.match(/(\d+(?:[\s'’]?\d+)*)/g);
+            if (!matches || matches.length === 0) {
+                el.textContent = fullText;
+                return;
+            }
+            // Convertit "1'234" / "1 234" en 1234 pour l'anim, mais on garde le
+            // formatage original (apostrophes/espaces) au final.
+            var targets = matches.map(function (m) {
+                return parseInt(m.replace(/[\s'’]/g, ''), 10);
+            });
+            var start = performance.now();
+            var duration = 1500;
+
+            function frame(now) {
+                var t = Math.min(1, (now - start) / duration);
+                var eased = easeOutCubic(t);
+                var i = 0;
+                var rendered = fullText.replace(/(\d+(?:[\s'’]?\d+)*)/g, function () {
+                    var target = targets[i++];
+                    var current = Math.round(target * eased);
+                    return current.toLocaleString('fr-CH').replace(/ /g, '’');
+                });
+                el.textContent = rendered;
+                if (t < 1) requestAnimationFrame(frame);
+                else el.textContent = fullText; // restaure le texte original (formatage)
+            }
+            requestAnimationFrame(frame);
+        }
+
+        var countupObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    var takeaway = entry.target;
+                    takeaway.classList.add('is-revealed');
+                    var strong = takeaway.querySelector('strong[data-countup]');
+                    if (strong) {
+                        // Capture le texte actuel (i18n a déjà tourné si chargé)
+                        var fullText = strong.textContent;
+                        animateCountUp(strong, fullText);
+                    }
+                    countupObserver.unobserve(takeaway);
+                }
+            });
+        }, { threshold: 0.4 });
+        document.querySelectorAll('.cost-takeaway').forEach(function (el) {
+            countupObserver.observe(el);
+        });
+
+        // ─── 6. Sticky CTA mobile : visible quand on est dans la section tiers
+        // sur mobile uniquement (le CSS gère le display:none > 980px).
+        var sticky = document.getElementById('stickyCtaMobile');
+        var tiersSection = document.querySelector('.pricing-tiers-section');
+        if (sticky && tiersSection) {
+            var stickyObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        sticky.classList.add('is-visible');
+                    } else {
+                        // Masquer une fois sorti vers le bas (pas vers le haut)
+                        if (entry.boundingClientRect.top < 0) {
+                            sticky.classList.add('is-visible');
+                        } else {
+                            sticky.classList.remove('is-visible');
+                        }
+                    }
+                });
+            }, { threshold: 0, rootMargin: '0px 0px -20% 0px' });
+            stickyObserver.observe(tiersSection);
+
+            // Masquer le sticky quand on atteint le footer
+            var footer = document.querySelector('.footer');
+            if (footer) {
+                var footerObserver = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) {
+                            sticky.classList.remove('is-visible');
+                        }
+                    });
+                }, { threshold: 0 });
+                footerObserver.observe(footer);
+            }
+        }
+    })();
+    </script>
 </body>
 </html>

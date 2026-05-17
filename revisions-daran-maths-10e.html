@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Révisions Mathématiques — 10e Harmos (Cycle d'orientation Genève)</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  html, body {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 12pt;
+    color: #000;
+    background: #fff;
+    line-height: 1.45;
+    margin: 0;
+    padding: 0;
+  }
+  .page {
+    max-width: 180mm;
+    margin: 0 auto;
+    padding: 6mm 0;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: auto; }
+  h1.title {
+    text-align: center;
+    font-size: 14pt;
+    font-weight: bold;
+    border: 1.5px solid #000;
+    padding: 6px 12px;
+    display: inline-block;
+    margin: 0 auto 12px;
+  }
+  .title-wrap { text-align: center; }
+  .header-line { margin: 4px 0; }
+  .header-line.bold { font-weight: bold; }
+  .note-circle {
+    width: 70px; height: 70px;
+    border: 1.5px solid #000;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 11pt;
+    float: right;
+    margin-right: 30px;
+  }
+  .points-row {
+    margin: 12px 0;
+    min-height: 80px;
+  }
+  .consignes {
+    text-align: center;
+    font-style: italic;
+    margin: 16px 0 20px;
+    font-size: 11pt;
+  }
+  .ex-title {
+    font-weight: bold;
+    text-decoration: underline;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  .ex-body { margin-bottom: 10px; }
+  .lines {
+    margin: 8px 0;
+  }
+  .lines .line {
+    border-bottom: 0.8px solid #555;
+    height: 22px;
+  }
+  .sectors-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    margin: 14px 0;
+    gap: 8px;
+  }
+  .sector-box { text-align: center; font-size: 10.5pt; }
+  .sector-label-radius {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 2px;
+    font-size: 11pt;
+  }
+  .arrow { font-weight: bold; }
+  .eq-list { margin: 8px 0 8px 24px; }
+  .eq-list li { margin-bottom: 18px; font-family: "Cambria Math", "Times New Roman", serif; font-size: 12.5pt; }
+  .grid-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+  }
+  table.values {
+    border-collapse: collapse;
+    margin: 8px 0;
+  }
+  table.values td, table.values th {
+    border: 1px solid #000;
+    padding: 4px 12px;
+    text-align: center;
+    min-width: 32px;
+    height: 28px;
+  }
+  .solution {
+    background: #f3f3f3;
+    border-left: 4px solid #2c7a4b;
+    padding: 8px 12px;
+    margin: 10px 0;
+    font-size: 11pt;
+  }
+  .solution h3 {
+    margin: 0 0 6px;
+    color: #2c7a4b;
+    font-size: 11.5pt;
+  }
+  .tip {
+    background: #fff8e1;
+    border-left: 4px solid #c79100;
+    padding: 6px 10px;
+    margin: 8px 0;
+    font-size: 10.5pt;
+    font-style: italic;
+  }
+  .formula {
+    text-align: center;
+    background: #eef5ff;
+    border: 1px dashed #3a6ea5;
+    padding: 6px 12px;
+    margin: 8px auto;
+    display: inline-block;
+    font-family: "Cambria Math", "Times New Roman", serif;
+    font-size: 12.5pt;
+  }
+  .center { text-align: center; }
+  .small { font-size: 10pt; }
+  .answer-key-title {
+    background: #2c7a4b;
+    color: white;
+    padding: 8px 14px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0 0 12px;
+    font-size: 13pt;
+  }
+  @media print {
+    .no-print { display: none; }
+    body { font-size: 11.5pt; }
+  }
+  .print-btn {
+    position: fixed;
+    top: 12px; right: 12px;
+    background: #2c7a4b;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer la fiche</button>
+
+<!-- =========================== PAGE 1 — ÉNONCÉ =========================== -->
+<div class="page">
+
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div class="header-line bold">Nom, prénom : ____________________________</div>
+    </div>
+    <div class="note-circle">NOTE</div>
+  </div>
+
+  <div class="title-wrap" style="margin-top: 14px;">
+    <h1 class="title">Fiche de révision de mathématiques — thème :<br>Équations, introduction aux fonctions, aire de secteur circulaire</h1>
+  </div>
+
+  <div class="header-line bold" style="margin-top:12px;">Nombre de points obtenus :</div>
+  <div style="height: 40px;"></div>
+
+  <div class="consignes">
+    L'ensemble de l'évaluation est à rédiger sur la feuille d'énoncé.<br>
+    L'usage de la calculatrice est autorisé.<br>
+    Dans l'ensemble de l'épreuve, tu prendras soin de <b>justifier</b> chacune de tes affirmations et
+    expliqueras soigneusement ce à quoi correspondent les calculs que tu effectues !!!
+  </div>
+
+  <!-- ===== EXERCICE 1 ===== -->
+  <div class="ex-title">Exercice 1 :</div>
+  <div class="ex-body">
+    Calcule l'aire des secteurs circulaires ci-dessous. Tu donneras une réponse arrondie au centième.
+  </div>
+
+  <div class="sectors-row">
+    <!-- Secteur 1 : 40°, rayon 3 cm. Centre (15,90), r=80. End = (15+80cos40, 90-80sin40) = (76.28, 38.58) -->
+    <div class="sector-box">
+      <svg width="120" height="110" viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg">
+        <text x="6" y="14" font-style="italic" font-size="11" font-family="serif">sect 1</text>
+        <path d="M 15 90 L 95 90 A 80 80 0 0 0 76.28 38.58 Z"
+              fill="#cfcfcf" stroke="#000" stroke-width="1.2"/>
+        <text x="30" y="84" font-size="11" font-family="serif">40°</text>
+      </svg>
+      <div class="sector-label-radius">
+        <span class="arrow">←</span><span>3 cm</span><span class="arrow">→</span>
+      </div>
+    </div>
+
+    <!-- Secteur 2 : 80°, rayon 4 cm. Centre (15,90), r=80. End = (15+80cos80, 90-80sin80) = (28.89, 11.21) -->
+    <div class="sector-box">
+      <svg width="120" height="110" viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg">
+        <text x="6" y="14" font-style="italic" font-size="11" font-family="serif">sect 2</text>
+        <path d="M 15 90 L 95 90 A 80 80 0 0 0 28.89 11.21 Z"
+              fill="#cfcfcf" stroke="#000" stroke-width="1.2"/>
+        <text x="32" y="78" font-size="11" font-family="serif">80°</text>
+      </svg>
+      <div class="sector-label-radius">
+        <span class="arrow">←</span><span>4 cm</span><span class="arrow">→</span>
+      </div>
+    </div>
+
+    <!-- Secteur 3 : 145°, rayon 2.5 cm. Centre (75,90), r=80. End = (75+80cos145, 90-80sin145) = (9.46, 44.11) -->
+    <div class="sector-box">
+      <svg width="160" height="110" viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg">
+        <text x="6" y="14" font-style="italic" font-size="11" font-family="serif">sect 3</text>
+        <path d="M 75 90 L 155 90 A 80 80 0 0 0 9.46 44.11 Z"
+              fill="#cfcfcf" stroke="#000" stroke-width="1.2"/>
+        <text x="62" y="72" font-size="11" font-family="serif">145°</text>
+      </svg>
+      <div class="sector-label-radius">
+        <span class="arrow">←</span><span>2,5 cm</span><span class="arrow">→</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="lines">
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+  </div>
+
+</div>
+
+<!-- =========================== PAGE 2 — EX 2 et 3 =========================== -->
+<div class="page">
+
+  <!-- ===== EXERCICE 2 ===== -->
+  <div class="ex-title">Exercice 2 :</div>
+  <div class="ex-body">
+    Résous les équations suivantes. <b>Vérifie</b> ta solution en la remplaçant dans l'équation de départ.
+  </div>
+
+  <div style="display:flex; gap: 30px;">
+    <div style="flex:1;">
+      <ol class="eq-list" type="a">
+        <li>5x − 7 = 3x + 9</li>
+        <li>4(x − 2) = 2x + 6</li>
+        <li>3x + 5 − 2(x + 1) = x − 4 + 9</li>
+      </ol>
+    </div>
+    <div style="flex:1;">
+      <ol class="eq-list" type="a" start="4">
+        <li>(x / 2) + 3 = (x / 3) + 5</li>
+        <li>7 − 3(2x − 1) = 4 − x</li>
+        <li>(2x − 1) / 5 = (x + 4) / 3</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="lines">
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+  </div>
+
+  <!-- ===== EXERCICE 3 ===== -->
+  <div class="ex-title">Exercice 3 : Mise en équation</div>
+  <div class="ex-body">
+    Léa a 14 ans et son grand frère Tom a 22 ans.<br>
+    Dans combien d'années Tom aura-t-il exactement <b>le double</b> de l'âge de Léa ?
+    <br><br>
+    <i>Tu poseras une équation en appelant <b>x</b> le nombre d'années cherché, puis tu la résoudras et tu rédigeras une phrase de réponse.</i>
+  </div>
+
+  <div class="lines">
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+  </div>
+
+</div>
+
+<!-- =========================== PAGE 3 — EX 4 =========================== -->
+<div class="page">
+
+  <!-- ===== EXERCICE 4 ===== -->
+  <div class="ex-title">Exercice 4 :</div>
+  <div class="ex-body">
+    Pour chacune des deux fonctions suivantes, dresse un tableau de valeurs puis représente ces deux fonctions dans un <b>même</b> repère.<br><br>
+    Les deux fonctions sont :&nbsp;&nbsp;&nbsp; <i>f(x)</i> = 2x − 3 &nbsp; et &nbsp; <i>g(x)</i> = x² − 2
+  </div>
+
+  <div style="display:flex; gap: 30px; align-items:flex-start;">
+    <div>
+      <p class="small"><b>Tableau de f(x) :</b></p>
+      <table class="values">
+        <tr><td><i>x</i></td><td>−3</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+        <tr><td><i>f(x)</i></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </table>
+      <p class="small" style="margin-top:14px;"><b>Tableau de g(x) :</b></p>
+      <table class="values">
+        <tr><td><i>x</i></td><td>−3</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+        <tr><td><i>g(x)</i></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Repère orthonormé -->
+  <div class="grid-wrap" style="margin-top: 18px;">
+    <svg width="360" height="360" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" style="border:1px solid #aaa;">
+      <!-- grille -->
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#cfd8dc" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="360" height="360" fill="url(#grid)"/>
+      <!-- axes -->
+      <line x1="0" y1="180" x2="360" y2="180" stroke="#000" stroke-width="1.2"/>
+      <line x1="180" y1="0" x2="180" y2="360" stroke="#000" stroke-width="1.2"/>
+      <!-- flèches axes -->
+      <polygon points="356,180 348,176 348,184" fill="#000"/>
+      <polygon points="180,4 176,12 184,12" fill="#000"/>
+      <!-- graduations x -->
+      <g font-size="10" font-family="serif" text-anchor="middle">
+        <text x="20"  y="195">−8</text>
+        <text x="60"  y="195">−6</text>
+        <text x="100" y="195">−4</text>
+        <text x="140" y="195">−2</text>
+        <text x="220" y="195">2</text>
+        <text x="260" y="195">4</text>
+        <text x="300" y="195">6</text>
+        <text x="340" y="195">8</text>
+        <text x="186" y="195">0</text>
+      </g>
+      <!-- graduations y -->
+      <g font-size="10" font-family="serif" text-anchor="end">
+        <text x="174" y="24">8</text>
+        <text x="174" y="64">6</text>
+        <text x="174" y="104">4</text>
+        <text x="174" y="144">2</text>
+        <text x="174" y="224">−2</text>
+        <text x="174" y="264">−4</text>
+        <text x="174" y="304">−6</text>
+        <text x="174" y="344">−8</text>
+      </g>
+      <text x="350" y="172" font-size="11" font-style="italic">x</text>
+      <text x="186" y="14"  font-size="11" font-style="italic">y</text>
+    </svg>
+  </div>
+
+</div>
+
+<!-- =========================== PAGE 4-5 — CORRECTION =========================== -->
+<div class="page">
+
+  <div class="answer-key-title">✓ CORRECTION DÉTAILLÉE — pour vérifier après avoir fait la fiche</div>
+
+  <!-- ===== Correction Ex 1 ===== -->
+  <div class="ex-title">Exercice 1 — Aire de secteurs circulaires</div>
+
+  <div class="formula">
+    Aire = π × r² × (α / 360°)
+  </div>
+
+  <div class="tip">
+    <b>Méthode :</b> on prend l'aire totale du disque (π × r²), puis on garde seulement la fraction du disque qui correspond à l'angle α. Si α = 360°, on retrouve bien l'aire totale.
+  </div>
+
+  <div class="solution">
+    <h3>Secteur 1 — angle 40°, rayon 3 cm</h3>
+    Aire = π × 3² × (40 / 360) = π × 9 × (1/9) = <b>π ≈ 3,14 cm²</b>
+  </div>
+
+  <div class="solution">
+    <h3>Secteur 2 — angle 80°, rayon 4 cm</h3>
+    Aire = π × 4² × (80 / 360) = π × 16 × (2/9) = 32π / 9 ≈ <b>11,17 cm²</b>
+  </div>
+
+  <div class="solution">
+    <h3>Secteur 3 — angle 145°, rayon 2,5 cm</h3>
+    Aire = π × 2,5² × (145 / 360) = π × 6,25 × (145/360) ≈ <b>7,91 cm²</b>
+  </div>
+
+  <!-- ===== Correction Ex 2 ===== -->
+  <div class="ex-title" style="margin-top:18px;">Exercice 2 — Équations</div>
+
+  <div class="tip">
+    <b>Stratégie :</b> 1) je développe les parenthèses, 2) je regroupe les <i>x</i> d'un côté et les nombres de l'autre, 3) je divise pour isoler <i>x</i>, 4) <b>je vérifie</b> en remplaçant <i>x</i> dans l'équation de départ.
+  </div>
+
+  <div class="solution">
+    <h3>a) 5x − 7 = 3x + 9</h3>
+    5x − 3x = 9 + 7&nbsp;&nbsp;→&nbsp;&nbsp;2x = 16&nbsp;&nbsp;→&nbsp;&nbsp;<b>x = 8</b><br>
+    <i>Vérif :</i> 5×8 − 7 = 33&nbsp;&nbsp;et&nbsp;&nbsp;3×8 + 9 = 33 ✓
+  </div>
+
+  <div class="solution">
+    <h3>b) 4(x − 2) = 2x + 6</h3>
+    4x − 8 = 2x + 6&nbsp;&nbsp;→&nbsp;&nbsp;2x = 14&nbsp;&nbsp;→&nbsp;&nbsp;<b>x = 7</b><br>
+    <i>Vérif :</i> 4×(7−2) = 20&nbsp;&nbsp;et&nbsp;&nbsp;2×7 + 6 = 20 ✓
+  </div>
+
+  <div class="solution">
+    <h3>c) 3x + 5 − 2(x + 1) = x − 4 + 9</h3>
+    3x + 5 − 2x − 2 = x + 5&nbsp;&nbsp;→&nbsp;&nbsp;x + 3 = x + 5&nbsp;&nbsp;→&nbsp;&nbsp;3 = 5 (faux)<br>
+    <b>Aucune solution</b> — c'est une équation impossible.<br>
+    <i>(Si tu obtiens un truc comme « 3 = 5 », ce n'est pas une erreur : ça veut dire que l'équation n'a aucune solution.)</i>
+  </div>
+
+  <div class="solution">
+    <h3>d) x/2 + 3 = x/3 + 5</h3>
+    Multiplier tout par 6 :&nbsp;&nbsp;3x + 18 = 2x + 30&nbsp;&nbsp;→&nbsp;&nbsp;<b>x = 12</b><br>
+    <i>Vérif :</i> 12/2 + 3 = 9&nbsp;&nbsp;et&nbsp;&nbsp;12/3 + 5 = 9 ✓
+  </div>
+
+  <div class="solution">
+    <h3>e) 7 − 3(2x − 1) = 4 − x</h3>
+    7 − 6x + 3 = 4 − x&nbsp;&nbsp;→&nbsp;&nbsp;10 − 6x = 4 − x&nbsp;&nbsp;→&nbsp;&nbsp;6 = 5x&nbsp;&nbsp;→&nbsp;&nbsp;<b>x = 6/5 = 1,2</b><br>
+    <i>Vérif :</i> 7 − 3(2×1,2 − 1) = 7 − 3×1,4 = 2,8&nbsp;&nbsp;et&nbsp;&nbsp;4 − 1,2 = 2,8 ✓
+  </div>
+
+  <div class="solution">
+    <h3>f) (2x − 1)/5 = (x + 4)/3</h3>
+    Produit en croix : 3(2x − 1) = 5(x + 4)&nbsp;&nbsp;→&nbsp;&nbsp;6x − 3 = 5x + 20&nbsp;&nbsp;→&nbsp;&nbsp;<b>x = 23</b><br>
+    <i>Vérif :</i> (2×23 − 1)/5 = 45/5 = 9&nbsp;&nbsp;et&nbsp;&nbsp;(23 + 4)/3 = 27/3 = 9 ✓
+  </div>
+
+</div>
+
+<!-- =========================== PAGE 5 — CORRECTION (suite) =========================== -->
+<div class="page">
+
+  <div class="answer-key-title">✓ CORRECTION (suite)</div>
+
+  <!-- ===== Correction Ex 3 ===== -->
+  <div class="ex-title">Exercice 3 — Mise en équation (problème d'âge)</div>
+
+  <div class="tip">
+    <b>Méthode pour les problèmes :</b><br>
+    1) Je nomme l'inconnue (« <i>x</i> = … »).<br>
+    2) Je traduis l'énoncé en équation.<br>
+    3) Je résous.<br>
+    4) Je <b>réponds par une phrase</b> et je vérifie que la réponse a un sens.
+  </div>
+
+  <div class="solution">
+    <h3>Résolution</h3>
+    Soit <i>x</i> = nombre d'années à attendre.<br><br>
+    • Dans <i>x</i> ans, Léa aura : 14 + <i>x</i><br>
+    • Dans <i>x</i> ans, Tom aura : 22 + <i>x</i><br><br>
+    On veut : « Tom = 2 × Léa », donc l'équation est :<br>
+    <b>22 + x = 2 × (14 + x)</b><br><br>
+    22 + x = 28 + 2x&nbsp;&nbsp;→&nbsp;&nbsp;22 − 28 = 2x − x&nbsp;&nbsp;→&nbsp;&nbsp;−6 = x&nbsp;&nbsp;→&nbsp;&nbsp;<b>x = −6</b><br><br>
+    <b>Phrase de réponse :</b> x est négatif, donc ce n'est pas « dans » 6 ans mais « il y a » 6 ans. Tom avait 16 ans et Léa avait 8 ans : 16 = 2 × 8 ✓<br>
+    <i>Conclusion : c'était il y a 6 ans, et cela ne se reproduira plus jamais (l'écart d'âge reste fixe à 8 ans, donc le rapport diminue avec le temps).</i>
+  </div>
+
+  <!-- ===== Correction Ex 4 ===== -->
+  <div class="ex-title" style="margin-top:18px;">Exercice 4 — Fonctions et représentation graphique</div>
+
+  <div class="tip">
+    <b>Astuce :</b> <i>f(x) = 2x − 3</i> est une <b>fonction affine</b> (droite). Sa pente est 2 (« je monte de 2 quand j'avance de 1 ») et son ordonnée à l'origine est −3 (la droite coupe l'axe vertical en y = −3).<br>
+    <i>g(x) = x² − 2</i> est une <b>parabole</b> tournée vers le haut, son sommet est au point (0 ; −2).
+  </div>
+
+  <div class="solution">
+    <h3>Tableau de f(x) = 2x − 3</h3>
+    <table class="values">
+      <tr><th>x</th><td>−3</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+      <tr><th>f(x)</th><td>−9</td><td>−7</td><td>−5</td><td>−3</td><td>−1</td><td>1</td><td>3</td></tr>
+    </table>
+    <i>Exemple de calcul :</i> f(2) = 2×2 − 3 = 4 − 3 = 1
+  </div>
+
+  <div class="solution">
+    <h3>Tableau de g(x) = x² − 2</h3>
+    <table class="values">
+      <tr><th>x</th><td>−3</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+      <tr><th>g(x)</th><td>7</td><td>2</td><td>−1</td><td>−2</td><td>−1</td><td>2</td><td>7</td></tr>
+    </table>
+    <i>Exemple de calcul :</i> g(−3) = (−3)² − 2 = 9 − 2 = 7&nbsp;&nbsp;&nbsp;<b>⚠ Attention :</b> (−3)² = +9 (le carré d'un négatif est positif).
+  </div>
+
+  <div class="grid-wrap">
+    <svg width="380" height="380" viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg" style="border:1px solid #aaa;">
+      <defs>
+        <pattern id="grid2" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#cfd8dc" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="380" height="380" fill="url(#grid2)"/>
+      <line x1="0" y1="190" x2="380" y2="190" stroke="#000" stroke-width="1.2"/>
+      <line x1="190" y1="0" x2="190" y2="380" stroke="#000" stroke-width="1.2"/>
+      <polygon points="376,190 368,186 368,194" fill="#000"/>
+      <polygon points="190,4 186,12 194,12" fill="#000"/>
+
+      <!-- droite f(x) = 2x − 3 : de x=-3 (y=-9) à x=3 (y=3) -->
+      <!-- échelle : 1 unité = 20px ; origine (190,190) -->
+      <!-- (-3,-9) → (190-60, 190+180)=(130, 370) ; (3,3) → (250, 130) -->
+      <line x1="130" y1="370" x2="250" y2="130" stroke="#1565c0" stroke-width="2.2"/>
+      <text x="255" y="128" font-size="13" fill="#1565c0" font-style="italic" font-weight="bold">f(x) = 2x−3</text>
+
+      <!-- parabole g(x) = x² − 2 : points (-3,7)(-2,2)(-1,-1)(0,-2)(1,-1)(2,2)(3,7) -->
+      <!-- (x_pix = 190 + 20x), (y_pix = 190 − 20y) -->
+      <!-- (-3,7)→(130,50) ; (-2,2)→(150,150) ; (-1,-1)→(170,210) ; (0,-2)→(190,230) ; (1,-1)→(210,210) ; (2,2)→(230,150) ; (3,7)→(250,50) -->
+      <path d="M 130 50 Q 150 150 170 210 Q 180 222 190 230 Q 200 222 210 210 Q 230 150 250 50"
+            fill="none" stroke="#c62828" stroke-width="2.2"/>
+      <!-- meilleurs : path par points avec courbe lisse -->
+      <text x="60" y="55" font-size="13" fill="#c62828" font-style="italic" font-weight="bold">g(x) = x²−2</text>
+
+      <!-- points -->
+      <g fill="#1565c0">
+        <circle cx="130" cy="370" r="2.5"/>
+        <circle cx="150" cy="330" r="2.5"/>
+        <circle cx="170" cy="290" r="2.5"/>
+        <circle cx="190" cy="250" r="2.5"/>
+        <circle cx="210" cy="210" r="2.5"/>
+        <circle cx="230" cy="170" r="2.5"/>
+        <circle cx="250" cy="130" r="2.5"/>
+      </g>
+      <g fill="#c62828">
+        <circle cx="130" cy="50" r="2.5"/>
+        <circle cx="150" cy="150" r="2.5"/>
+        <circle cx="170" cy="210" r="2.5"/>
+        <circle cx="190" cy="230" r="2.5"/>
+        <circle cx="210" cy="210" r="2.5"/>
+        <circle cx="230" cy="150" r="2.5"/>
+        <circle cx="250" cy="50" r="2.5"/>
+      </g>
+
+      <!-- graduations -->
+      <g font-size="9" font-family="serif" text-anchor="middle">
+        <text x="30"  y="204">−8</text><text x="70"  y="204">−6</text>
+        <text x="110" y="204">−4</text><text x="150" y="204">−2</text>
+        <text x="230" y="204">2</text><text x="270" y="204">4</text>
+        <text x="310" y="204">6</text><text x="350" y="204">8</text>
+        <text x="196" y="204">0</text>
+      </g>
+      <g font-size="9" font-family="serif" text-anchor="end">
+        <text x="184" y="34">8</text><text x="184" y="74">6</text>
+        <text x="184" y="114">4</text><text x="184" y="154">2</text>
+        <text x="184" y="234">−2</text><text x="184" y="274">−4</text>
+        <text x="184" y="314">−6</text><text x="184" y="354">−8</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="tip" style="margin-top: 14px;">
+    <b>Bilan visuel :</b> la droite bleue et la parabole rouge se croisent en deux points : on peut lire approximativement (−1 ; −5) et (… proche de x ≈ 4). Sur cet exercice, on les <b>place</b> seulement sur le repère, on ne calcule pas le point d'intersection (c'est pour plus tard).
+  </div>
+
+  <div style="margin-top: 30px; text-align: center; font-style: italic; color: #555; font-size: 10pt;">
+    Bon courage Daran ! 💪 — Si une question reste floue, refais l'exercice en lisant la correction ligne par ligne, c'est la meilleure méthode.
+  </div>
+
+</div>
+
+</body>
+</html>
