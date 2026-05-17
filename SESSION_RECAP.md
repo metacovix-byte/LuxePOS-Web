@@ -1,6 +1,56 @@
-# 📝 Session du 2026-05-06 → reprise demain
+# 📝 Session du 2026-05-07 → site marketing complet livré
 
-## 🎯 État actuel : v5.14.10 LIVRÉE (audit design appliqué + git + CI ready)
+## 🎯 État actuel : v5.14.15 (app) + site marketing multilingue complet + pack monétisation
+
+### 🆕 Livré aujourd'hui (2026-05-07)
+
+**App** (v5.14.11 → v5.14.15) :
+- Auto-updater Tauri 2 activé (clés générées, secrets GitHub, signing, latest.json)
+- Bug `createUpdaterArtifacts` corrigé pour générer les .sig sur la CI
+- Bouton manuel "Vérifier les mises à jour" dans Paramètres + auto-check au boot
+- v5.14.15 (avec `createUpdaterArtifacts: true`) : CI verte avec .exe + .dmg + .sig + latest.json
+- Wizard coûts trié par impact financier + badge "🎯 PRIORITÉ #1"
+- Footer "💾 Sauvegardé il y a X" cliquable → export rapide .json
+- Bridge Capacitor `_isCapacitor()` ajouté
+
+**Site marketing** (`website/`) :
+- `index.html` + `style.css` + `script.js` — dark + glassmorphism, identité 1:1 avec l'app
+- `pricing.html` + `pricing.css` — page tarifs dédiée (3 tiers, math transparente, comparatif annuel, FAQ)
+- `i18n.js` — 4 langues complètes (FR/EN/DE/IT) avec switcher 🌍 + hreflang SEO
+- 7 améliorations visuelles sur tarifs : reveal scroll, count-up "économise", barres animées, badge shimmer, sticky CTA mobile, noise overlay
+- Repo public sur GitHub, prêt pour GitHub Pages
+
+**Stratégie commerciale** :
+- `MONETIZATION_STRATEGY.md` (40 KB) — document de stratégie complet 10 sections :
+  - Persona ICP "Marie l'artisane" + 6 sous-segments + anti-personas
+  - Roadmap 4 phases (M0 → M24+) avec actions mois par mois
+  - 10 canaux d'acquisition analysés (effort/coût/ROI)
+  - KPIs avec North Star "Weekly Active Sellers"
+  - Pricing détaillé (early-bird, coupons, saisonnier)
+  - Setup technique Stripe (~6 jours dev)
+  - 7 risques + mitigations
+  - 5 quick wins cette semaine
+  - Objectifs SMART 6/12/18/24 mois
+
+**Pack marketing** (`marketing/`) :
+- `PRESS_KIT.md` — boilerplate FR/EN, palette, 17 faits-clés, 3 citations, 5 angles presse
+- `LAUNCH_EMAILS.md` — 3 templates (pré-annonce Pro J-30, Lifetime early-bird 50 places, lancement public J-0) FR+EN
+- `INSTA_POSTS.md` — 10 carrousels Instagram complets (slides, captions, hashtags, calendrier 10 semaines)
+- `GITHUB_SPONSORS_SETUP.md` — procédure complète + 3 tiers (☕ 5€ / 💚 15€ / 💎 50€) + FUNDING.yml
+- `README_LUXEPOS.md` — refonte marketing du README projet
+- `NEWSLETTER_TEMPLATE.md` — template Buttondown.email + 12 mois de sujets + welcome email FR/EN
+
+### Git/CI infra
+- Repo **PUBLIC** sur https://github.com/metacovix-byte/LuxePOS-Web
+- 18+ commits poussés cette session
+- Workflow `release.yml` opérationnel (Mac + Windows signés sur tag v*)
+- Tag v5.14.15 → GitHub Release auto avec tous les artefacts signés
+
+---
+
+## 🎯 État précédent (référence)
+
+## 🎯 v5.14.10 (2026-05-06, ancien état) : audit design appliqué + git + CI ready
 
 ### 📦 Builds livrés cette session
 - **v5.14.7** : version propre (CDN inlinés, SW désactivé) — fin de soirée 1
