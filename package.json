@@ -22,5 +22,8 @@
     "@capacitor/preferences": "^8.0.1",
     "@playwright/test": "^1.59.1",
     "@tauri-apps/cli": "^2.11.0"
+  },
+  "dependencies": {
+    "@capacitor-mlkit/barcode-scanning": "^8.1.0"
   }
 }

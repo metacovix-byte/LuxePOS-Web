@@ -11156,6 +11156,16 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                                     aria-label="Rechercher un produit"
                                     autofocus>
                             </div>
+                            ${this._isCapacitor() ? `
+                                <button onclick="window.ui.scanBarcodeToCart()"
+                                        class="btn-2026 flex-shrink-0 flex items-center gap-2 px-4 py-4 rounded-xl shadow-lg text-white-force"
+                                        style="background: linear-gradient(135deg, var(--brand-main), var(--brand-dark));"
+                                        title="Scanner un code-barres ou QR code"
+                                        aria-label="Scanner un code-barres">
+                                    <i data-lucide="scan-line" class="w-5 h-5"></i>
+                                    <span class="hidden sm:inline font-semibold">Scanner</span>
+                                </button>
+                            ` : ''}
                         </div>
 
                         <!-- Grille de produits -->
@@ -15339,6 +15349,14 @@ service cloud.firestore {
                                         value="${isEdit ? (product.reference || '') : ''}"
                                         class="glass-input flex-1 p-3 rounded-lg font-mono"
                                         oninput="this.value = this.value.toUpperCase()">
+                                    ${this._isCapacitor() ? `
+                                        <button type="button"
+                                                onclick="window.ui.scanBarcodeToProductRef()"
+                                                class="btn-2026 secondary"
+                                                title="Scanner un code-barres avec la caméra">
+                                            <i data-lucide="scan-line" class="w-4 h-4"></i> Scan
+                                        </button>
+                                    ` : ''}
                                     <button type="button"
                                             onclick="window.ui.generateProductRef(document.getElementById('product-category')?.value);"
                                             class="btn-2026 secondary"
@@ -27212,6 +27230,115 @@ td{padding:12px;border-bottom:1px solid #eee}
                 </div>
             `;
             if (window.lucide) lucide.createIcons();
+        }
+
+        /* ════════════════════════════════════════════════════════════════════════════════
+           v5.14.16 — SCANNER CODE-BARRES NATIF (Android via Capacitor ML Kit)
+           ──────────────────────────────────────────────────────────────────────────────
+           - Disponible UNIQUEMENT en mode Capacitor (Android/iOS). Sur Tauri (Windows/Mac)
+             ou navigateur web, scanBarcode() retourne null et affiche un toast info.
+           - Le `import('@capacitor-mlkit/barcode-scanning')` est dynamique → Tauri ne le
+             charge jamais (le bundler ne le résout pas, et le code n'est exécuté que si
+             _isCapacitor() === true).
+           - Formats supportés : QR, EAN-13, EAN-8, UPC-A, UPC-E, Code128, Code39, Code93,
+             ITF, Codabar, PDF417, Aztec, Data Matrix (tous offline, via ML Kit Google).
+           ════════════════════════════════════════════════════════════════════════════════ */
+
+        /**
+         * Lance le scanner natif et retourne le code lu (ou null si annulé / non dispo).
+         * Demande la permission caméra si nécessaire.
+         * @returns {Promise<string|null>}
+         */
+        async scanBarcode() {
+            if (!this._isCapacitor()) {
+                this.toast?.('Scanner disponible uniquement sur l\'app mobile', 'info');
+                return null;
+            }
+            try {
+                const mod = await import('@capacitor-mlkit/barcode-scanning');
+                const BarcodeScanner = mod.BarcodeScanner || mod.default?.BarcodeScanner || mod.default;
+                if (!BarcodeScanner || typeof BarcodeScanner.scan !== 'function') {
+                    this.toast?.('Plugin scanner indisponible — réinstallez l\'app', 'error');
+                    return null;
+                }
+                // 1) Vérifier la dispo du module ML Kit (téléchargé à la 1ère utilisation)
+                if (typeof BarcodeScanner.isGoogleBarcodeScannerModuleAvailable === 'function') {
+                    try {
+                        const { available } = await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable();
+                        if (!available && typeof BarcodeScanner.installGoogleBarcodeScannerModule === 'function') {
+                            this.toast?.('Téléchargement du module scanner (1ère utilisation)…', 'info');
+                            await BarcodeScanner.installGoogleBarcodeScannerModule();
+                        }
+                    } catch (e) {
+                        // pas fatal, on continue
+                        window.LOG?.debug('ML Kit module check failed', e?.message);
+                    }
+                }
+                // 2) Permissions caméra
+                if (typeof BarcodeScanner.checkPermissions === 'function') {
+                    const { camera } = await BarcodeScanner.checkPermissions();
+                    if (camera !== 'granted') {
+                        const req = await BarcodeScanner.requestPermissions();
+                        if (req.camera !== 'granted') {
+                            this.toast?.('Permission caméra refusée — activez-la dans les paramètres Android', 'error');
+                            return null;
+                        }
+                    }
+                }
+                // 3) Scan (UI ML Kit plein écran, retourne dès qu'un code est lu)
+                const result = await BarcodeScanner.scan();
+                const barcodes = result?.barcodes || [];
+                if (barcodes.length > 0) {
+                    const raw = barcodes[0].rawValue || barcodes[0].displayValue || '';
+                    if (window.navigator?.vibrate) try { navigator.vibrate(40); } catch (_) {}
+                    return raw;
+                }
+                return null;
+            } catch (e) {
+                console.error('scanBarcode error', e);
+                const msg = (e && e.message) ? e.message : String(e);
+                // Annulation utilisateur = pas d'erreur
+                if (/cancel|cancelled/i.test(msg)) return null;
+                this.toast?.('Erreur scanner : ' + msg, 'error');
+                return null;
+            }
+        }
+
+        /**
+         * Workflow POS : scan → cherche le produit par référence → ajoute au panier.
+         * Affiche un toast d'échec si aucun produit ne correspond.
+         */
+        async scanBarcodeToCart() {
+            const code = await this.scanBarcode();
+            if (!code) return;
+            // Réutilise la logique de quickAddByReference (match exact ref, fallback search)
+            const trimmed = code.trim();
+            const input = document.getElementById('pos-search');
+            if (input) {
+                input.value = trimmed;
+                if (typeof this.filterProducts === 'function') this.filterProducts(trimmed);
+            }
+            if (typeof this.quickAddByReference === 'function') {
+                this.quickAddByReference(trimmed);
+            } else {
+                this.toast?.('Code scanné : ' + trimmed, 'success');
+            }
+        }
+
+        /**
+         * Workflow formulaire produit : scan → pré-remplit le champ #product-reference.
+         */
+        async scanBarcodeToProductRef() {
+            const code = await this.scanBarcode();
+            if (!code) return;
+            const ref = document.getElementById('product-reference');
+            if (ref) {
+                ref.value = code.trim().toUpperCase();
+                ref.dispatchEvent(new Event('input', { bubbles: true }));
+                this.toast?.('Code scanné : ' + ref.value, 'success');
+            } else {
+                this.toast?.('Code scanné : ' + code, 'info');
+            }
         }
     }
 
