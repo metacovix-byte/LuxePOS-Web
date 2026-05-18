@@ -27548,7 +27548,8 @@ td{padding:12px;border-bottom:1px solid #eee}
          *   - BarcodeDetector natif (Chromium/Edge, donc Tauri WebView2 sur Win/Mac récent)
          */
         _isScannerAvailable() {
-            if (this._isCapacitor()) return true;
+            // _isCapacitor est défini sur Store (pas UI), on délègue
+            if (window.store?._isCapacitor?.()) return true;
             if (typeof window.BarcodeDetector !== 'undefined') return true;
             return false;
         }
