@@ -1,0 +1,26 @@
+{
+  "name": "luxepos-demo-recorder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Convertit les démos HTML animées de LuxePOS en MP4 + GIF (variantes Insta, README, Twitter)",
+  "main": "record.js",
+  "scripts": {
+    "record": "node record.js",
+    "record:sale": "node record.js --demo=sale-flow",
+    "record:inv": "node record.js --demo=inventory-import",
+    "record:mp4": "node record.js --format=mp4",
+    "record:gif": "node record.js --format=gif"
+  },
+  "overrides": {
+    "puppeteer-screen-recorder": {
+      "puppeteer": "$puppeteer"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0",
+    "puppeteer-screen-recorder": "^3.0.0"
+  }
+}

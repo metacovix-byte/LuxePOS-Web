@@ -64,3 +64,7 @@ Z0.\ STOCK\ 2026/
 
 # Photos produits (lourd, chacun a son set local)
 photo-map.json
+
+# Demo recorder (artefacts vidéo + deps)
+marketing/demo/node_modules/
+marketing/demo/output/
