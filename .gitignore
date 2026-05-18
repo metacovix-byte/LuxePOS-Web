@@ -46,6 +46,7 @@ desktop.ini
 # Claude Code internals
 .claude/worktrees/
 .claude/projects/
+.claude/scheduled_tasks.lock
 
 # Unrelated stray files
 revisions-*.html

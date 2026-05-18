@@ -3964,6 +3964,105 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
         });
     };
 
+    /**
+     * v5.14.16 — Compression d'image dans le canvas (utilisé par : webcam, paste, bulk import).
+     * Encode en JPEG (perte légère mais size ~10x plus petit que PNG).
+     *
+     * @param {Blob|File|HTMLImageElement|HTMLVideoElement|HTMLCanvasElement} source - source de l'image
+     * @param {Object} [opts]
+     * @param {number} [opts.maxSize=800]   - taille max (largeur OU hauteur), conserve le ratio
+     * @param {number} [opts.quality=0.82]  - qualité JPEG (0.0 → 1.0)
+     * @param {string} [opts.mimeType='image/jpeg'] - 'image/jpeg' ou 'image/webp'
+     * @returns {Promise<string>} - data URL base64 du JPEG compressé
+     */
+    const compressImage = (source, opts = {}) => {
+        const maxSize  = opts.maxSize  || 800;
+        const quality  = opts.quality  !== undefined ? opts.quality : 0.82;
+        const mimeType = opts.mimeType || 'image/jpeg';
+
+        const loadImage = (src) => new Promise((resolve, reject) => {
+            // Source déjà drawable
+            if (src instanceof HTMLImageElement || src instanceof HTMLVideoElement || src instanceof HTMLCanvasElement) {
+                resolve(src);
+                return;
+            }
+            // File / Blob → blob URL → Image
+            if (src instanceof Blob) {
+                const url = URL.createObjectURL(src);
+                const img = new Image();
+                img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+                img.onerror = (err) => { URL.revokeObjectURL(url); reject(new Error('Image illisible')); };
+                img.src = url;
+                return;
+            }
+            // String (data URL ou URL)
+            if (typeof src === 'string') {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Image illisible'));
+                img.src = src;
+                return;
+            }
+            reject(new Error('Source image non supportée'));
+        });
+
+        return loadImage(source).then((img) => {
+            // Dimensions naturelles
+            let w = img.videoWidth || img.naturalWidth || img.width;
+            let h = img.videoHeight || img.naturalHeight || img.height;
+            if (!w || !h) throw new Error('Image vide (largeur/hauteur=0)');
+
+            // Calcul du ratio pour rentrer dans maxSize × maxSize
+            const ratio = Math.min(maxSize / w, maxSize / h, 1);
+            const targetW = Math.round(w * ratio);
+            const targetH = Math.round(h * ratio);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+            // Fond blanc pour les JPEG (sinon transparence devient noir)
+            if (mimeType === 'image/jpeg') {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, targetW, targetH);
+            }
+            ctx.drawImage(img, 0, 0, targetW, targetH);
+            return canvas.toDataURL(mimeType, quality);
+        });
+    };
+    window.compressImage = compressImage;
+
+    /**
+     * v5.14.16 — Extrait la "référence" d'un nom de fichier image.
+     * Logique : on prend le 1er token alphanumérique (lettres+chiffres+.+- collés),
+     *           sans suffixe de variation (`-1`, `_main`, ` (2)`, etc.).
+     *
+     * Exemples :
+     *   "B44.jpg"          → "B44"
+     *   "B44-1.jpg"        → "B44"
+     *   "B44_main.png"     → "B44"
+     *   "B44 (2).jpeg"     → "B44"
+     *   "C91.2x.jpg"       → "C91.2X"  (le 2x fait partie de la ref originale)
+     *   "PC22-front.webp"  → "PC22"
+     *
+     * @param {string} filename
+     * @returns {string|null}
+     */
+    const extractRefFromFilename = (filename) => {
+        if (!filename || typeof filename !== 'string') return null;
+        // Retire l'extension
+        const noExt = filename.replace(/\.[a-z0-9]{2,5}$/i, '');
+        // Le séparateur "-" ou "_" suivi d'un mot/numéro (mais PAS si ce mot fait partie de la ref originale)
+        // Heuristique : on coupe au 1er "-NN" (numéro après tiret) ou "_alpha" ou " " ou "("
+        // Mais on conserve les "." et chiffres internes (cas C91.2x).
+        // Pattern : on garde tout jusqu'au 1er séparateur explicite de variation.
+        const match = noExt.match(/^([A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)/);
+        if (!match) return null;
+        return match[1].toUpperCase();
+    };
+    window.extractRefFromFilename = extractRefFromFilename;
+
     // ─────────────────────────────────────────────────────────────────────────────────
     // GESTIONNAIRE D'ÉTAT (STORE)
     // ─────────────────────────────────────────────────────────────────────────────────
@@ -11156,7 +11255,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                                     aria-label="Rechercher un produit"
                                     autofocus>
                             </div>
-                            ${this._isCapacitor() ? `
+                            ${(this._isCapacitor() || this._isScannerAvailable?.()) ? `
                                 <button onclick="window.ui.scanBarcodeToCart()"
                                         class="btn-2026 flex-shrink-0 flex items-center gap-2 px-4 py-4 rounded-xl shadow-lg text-white-force"
                                         style="background: linear-gradient(135deg, var(--brand-main), var(--brand-dark));"
@@ -12154,6 +12253,14 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                                     style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
                                 <i data-lucide="upload" class="w-5 h-5"></i>
                                 <span class="hidden sm:inline">Importer CSV</span>
+                            </button>
+                            <!-- v5.14.16 — Import photos en masse (match par référence) -->
+                            <button onclick="window.ui.openBulkPhotoImport()"
+                                    class="px-4 py-3 rounded-xl flex items-center gap-2 transition-all btn-press font-semibold text-adaptive"
+                                    data-tooltip="Associer des photos à plusieurs produits d'un coup (match par référence)"
+                                    style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                                <i data-lucide="images" class="w-5 h-5"></i>
+                                <span class="hidden sm:inline">Photos en masse</span>
                             </button>
                             <button onclick="window.store.exportInventoryToCSV?.()"
                                     class="px-4 py-3 rounded-xl flex items-center gap-2 transition-all btn-press font-semibold text-adaptive"
@@ -15349,7 +15456,7 @@ service cloud.firestore {
                                         value="${isEdit ? (product.reference || '') : ''}"
                                         class="glass-input flex-1 p-3 rounded-lg font-mono"
                                         oninput="this.value = this.value.toUpperCase()">
-                                    ${this._isCapacitor() ? `
+                                    ${(this._isCapacitor() || this._isScannerAvailable?.()) ? `
                                         <button type="button"
                                                 onclick="window.ui.scanBarcodeToProductRef()"
                                                 class="btn-2026 secondary"
@@ -15611,31 +15718,43 @@ service cloud.firestore {
                                     Image du produit
                                 </label>
 
-                                <div class="flex gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <!-- Upload local -->
-                                    <div class="flex-1">
-                                        <label class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 transition-all border-2 border-dashed border-white/20 hover:border-brand/50 min-h-[120px]">
-                                            <input
-                                                type="file"
-                                                id="product-image-file"
-                                                accept="image/*"
-                                                class="hidden"
-                                                onchange="window.ui.handleImageUpload(this)">
-                                            <i data-lucide="upload-cloud" class="w-8 h-8 text-gray-400 mb-2"></i>
-                                            <span class="text-sm text-gray-400 text-center">Choisir une image locale</span>
-                                            <span class="text-xs text-gray-600 mt-1">Max 2MB</span>
-                                        </label>
-                                    </div>
+                                    <label class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 transition-all border-2 border-dashed border-white/20 hover:border-brand/50 min-h-[120px]">
+                                        <input
+                                            type="file"
+                                            id="product-image-file"
+                                            accept="image/*"
+                                            class="hidden"
+                                            onchange="window.ui.handleImageUpload(this)">
+                                        <i data-lucide="upload-cloud" class="w-7 h-7 text-gray-400 mb-2"></i>
+                                        <span class="text-sm text-gray-400 text-center">Choisir un fichier</span>
+                                        <span class="text-xs text-gray-600 mt-1">Max 2MB</span>
+                                    </label>
+
+                                    <!-- v5.14.16 — Capture webcam -->
+                                    <button type="button"
+                                            onclick="window.ui.openWebcamPhotoModal()"
+                                            class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 transition-all border-2 border-dashed border-white/20 hover:border-brand/50 min-h-[120px]"
+                                            title="Prendre une photo avec la webcam">
+                                        <i data-lucide="camera" class="w-7 h-7 text-gray-400 mb-2"></i>
+                                        <span class="text-sm text-gray-400 text-center">Caméra</span>
+                                        <span class="text-xs text-gray-600 mt-1">Webcam / mobile</span>
+                                    </button>
 
                                     <!-- Aperçu -->
-                                    <div class="flex-1">
-                                        <div id="image-preview-container" class="glass-panel p-4 rounded-xl flex items-center justify-center min-h-[120px]">
-                                            <div class="text-gray-600 text-sm text-center">
-                                                <i data-lucide="image" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>
-                                                Aperçu
-                                            </div>
+                                    <div id="image-preview-container" class="glass-panel p-4 rounded-xl flex items-center justify-center min-h-[120px]">
+                                        <div class="text-gray-600 text-sm text-center">
+                                            <i data-lucide="image" class="w-7 h-7 mx-auto mb-2 opacity-30"></i>
+                                            Aperçu
                                         </div>
                                     </div>
+                                </div>
+
+                                <!-- v5.14.16 — Indice paste -->
+                                <div class="text-xs text-gray-500 flex items-center gap-2 -mt-1">
+                                    <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>
+                                    <span>Astuce : tu peux aussi coller une image avec <kbd style="padding:1px 6px;background:var(--bg-tertiary);border-radius:4px;font-family:monospace;font-size:0.75em;">Ctrl</kbd>+<kbd style="padding:1px 6px;background:var(--bg-tertiary);border-radius:4px;font-family:monospace;font-size:0.75em;">V</kbd></span>
                                 </div>
 
                                 <!-- URL alternative -->
@@ -15738,6 +15857,49 @@ service cloud.firestore {
 
             // Focus sur le premier champ après un court délai
             setTimeout(() => modal.querySelector('#product-name')?.focus(), 100);
+
+            // v5.14.16 — Paste handler : coller une image depuis le presse-papier (Ctrl+V)
+            const pasteHandler = async (e) => {
+                if (!modal.isConnected) {
+                    document.removeEventListener('paste', pasteHandler);
+                    return;
+                }
+                const items = (e.clipboardData || window.clipboardData)?.items || [];
+                for (const item of items) {
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        e.preventDefault();
+                        const file = item.getAsFile();
+                        if (!file) continue;
+                        try {
+                            this.toast('Compression de l\'image…', 'info', 1500);
+                            const dataUrl = await window.compressImage(file, { maxSize: 800, quality: 0.82 });
+                            this.currentImagePreview = dataUrl;
+                            const dataInput = document.getElementById('product-image-data');
+                            if (dataInput) dataInput.value = dataUrl;
+                            const urlInput = document.getElementById('product-image-url');
+                            if (urlInput) urlInput.value = '';
+                            const preview = document.getElementById('image-preview-container');
+                            if (preview) {
+                                preview.innerHTML = `<img src="${esc(safeUrl(dataUrl, { allowDataImage: true }))}" class="image-upload-preview" alt="Aperçu">`;
+                            }
+                            this.toast('✓ Photo collée depuis le presse-papier', 'success');
+                        } catch (err) {
+                            console.error('Paste image error', err);
+                            this.toast('Erreur : ' + (err.message || 'impossible de coller l\'image'), 'error');
+                        }
+                        return;
+                    }
+                }
+            };
+            document.addEventListener('paste', pasteHandler);
+            // Auto-cleanup quand la modal disparaît
+            const observer = new MutationObserver(() => {
+                if (!modal.isConnected) {
+                    document.removeEventListener('paste', pasteHandler);
+                    observer.disconnect();
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: false });
         }
 
         /**
@@ -27233,10 +27395,583 @@ td{padding:12px;border-bottom:1px solid #eee}
         }
 
         /* ════════════════════════════════════════════════════════════════════════════════
-           v5.14.16 — SCANNER CODE-BARRES NATIF (Android via Capacitor ML Kit)
+           v5.14.16 — WORKFLOW PHOTO : webcam, bulk import, paste, scanner web
+           ──────────────────────────────────────────────────────────────────────────────
+           - openWebcamPhotoModal()  : capture photo via getUserMedia (Tauri + browser)
+           - openBulkPhotoImport()   : match auto fichiers ↔ produits par référence
+           - scanBarcodeWebcam()     : BarcodeDetector natif (Chromium/WebView2)
+           - _isScannerAvailable()   : détecte BarcodeDetector OU Capacitor ML Kit
+           ════════════════════════════════════════════════════════════════════════════════ */
+
+        /**
+         * v5.14.16 — Le scanner est dispo si :
+         *   - mode Capacitor (Android/iOS, plugin ML Kit), OU
+         *   - BarcodeDetector natif (Chromium/Edge, donc Tauri WebView2 sur Win/Mac récent)
+         */
+        _isScannerAvailable() {
+            if (this._isCapacitor()) return true;
+            if (typeof window.BarcodeDetector !== 'undefined') return true;
+            return false;
+        }
+
+        /**
+         * v5.14.16 — Détecte si une webcam (ou caméra mobile) est disponible.
+         * @returns {Promise<boolean>}
+         */
+        async _isWebcamAvailable() {
+            try {
+                if (!navigator.mediaDevices?.enumerateDevices) return false;
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                return devices.some(d => d.kind === 'videoinput');
+            } catch (_) { return false; }
+        }
+
+        /**
+         * v5.14.16 — Ouvre la modal de capture photo via webcam.
+         * - Preview live avec getUserMedia
+         * - Bouton "Capturer" → freeze frame + bouton "Reprendre" / "Utiliser"
+         * - À la validation : compresse en JPEG 800px / 0.82 et l'assigne au produit
+         */
+        async openWebcamPhotoModal() {
+            // Pré-flight : vérifier qu'on a au moins une caméra
+            const hasCam = await this._isWebcamAvailable();
+            if (!hasCam) {
+                this.toast?.('Aucune caméra détectée — utilise "Choisir un fichier"', 'warning', 4000);
+                return;
+            }
+
+            // Construit la modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-[100] flex items-center justify-center';
+            modal.style.cssText = 'background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);';
+            modal.innerHTML = `
+                <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl" style="width: min(640px, 95vw); border: 1px solid var(--border-color);">
+                    <div class="flex items-center justify-between p-4 border-b" style="border-color: var(--border-color); background: var(--bg-tertiary);">
+                        <h3 class="font-bold text-base flex items-center gap-2 text-adaptive">
+                            <i data-lucide="camera" class="w-5 h-5" style="color: var(--brand-main);"></i>
+                            Prendre une photo
+                        </h3>
+                        <button id="webcam-close" class="p-2 rounded-lg hover:bg-white/10 btn-press" aria-label="Fermer">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <div class="rounded-xl overflow-hidden bg-black flex items-center justify-center" style="aspect-ratio: 4/3;">
+                            <video id="webcam-video" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                            <canvas id="webcam-canvas" style="display:none; width:100%; height:100%; object-fit:cover;"></canvas>
+                        </div>
+                        <div id="webcam-status" class="text-xs text-adaptive-secondary mt-2 text-center" style="min-height:1.2em;">Démarrage de la caméra…</div>
+
+                        <!-- Sélecteur de caméra (si plusieurs) -->
+                        <select id="webcam-device-select" class="glass-input w-full p-2 rounded-lg text-sm mt-2" style="display:none;"></select>
+
+                        <div class="flex gap-2 mt-4" id="webcam-actions-shoot">
+                            <button id="webcam-capture-btn" class="flex-1 text-white-force px-4 py-3 rounded-xl font-semibold shadow-lg btn-press flex items-center justify-center gap-2"
+                                    style="background: linear-gradient(135deg, var(--brand-main), var(--brand-dark));">
+                                <i data-lucide="aperture" class="w-5 h-5"></i> Capturer
+                            </button>
+                        </div>
+                        <div class="flex gap-2 mt-4" id="webcam-actions-review" style="display:none;">
+                            <button id="webcam-retake-btn" class="flex-1 px-4 py-3 rounded-xl font-semibold btn-press flex items-center justify-center gap-2"
+                                    style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                                <i data-lucide="rotate-ccw" class="w-5 h-5"></i> Reprendre
+                            </button>
+                            <button id="webcam-use-btn" class="flex-1 text-white-force px-4 py-3 rounded-xl font-semibold shadow-lg btn-press flex items-center justify-center gap-2"
+                                    style="background: linear-gradient(135deg, var(--brand-main), var(--brand-dark));">
+                                <i data-lucide="check" class="w-5 h-5"></i> Utiliser cette photo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            if (window.lucide) lucide.createIcons();
+
+            const video = modal.querySelector('#webcam-video');
+            const canvas = modal.querySelector('#webcam-canvas');
+            const status = modal.querySelector('#webcam-status');
+            const captureBtn = modal.querySelector('#webcam-capture-btn');
+            const retakeBtn = modal.querySelector('#webcam-retake-btn');
+            const useBtn = modal.querySelector('#webcam-use-btn');
+            const closeBtn = modal.querySelector('#webcam-close');
+            const deviceSelect = modal.querySelector('#webcam-device-select');
+            const actionsShoot = modal.querySelector('#webcam-actions-shoot');
+            const actionsReview = modal.querySelector('#webcam-actions-review');
+
+            let stream = null;
+            let capturedDataUrl = null;
+
+            const stopStream = () => {
+                if (stream) {
+                    stream.getTracks().forEach(t => t.stop());
+                    stream = null;
+                }
+            };
+            const closeModal = () => {
+                stopStream();
+                modal.remove();
+            };
+
+            const startStream = async (deviceId = null) => {
+                stopStream();
+                status.textContent = 'Démarrage de la caméra…';
+                try {
+                    const constraints = {
+                        video: deviceId
+                            ? { deviceId: { exact: deviceId } }
+                            : { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+                        audio: false
+                    };
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    video.srcObject = stream;
+                    video.style.display = '';
+                    canvas.style.display = 'none';
+                    actionsShoot.style.display = 'flex';
+                    actionsReview.style.display = 'none';
+                    status.textContent = 'Aligne le produit puis clique "Capturer"';
+
+                    // Populate device list (après permission accordée)
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const cams = devices.filter(d => d.kind === 'videoinput');
+                    if (cams.length > 1) {
+                        deviceSelect.innerHTML = cams.map((c, i) => `<option value="${esc(c.deviceId)}">${esc(c.label || 'Caméra ' + (i + 1))}</option>`).join('');
+                        deviceSelect.style.display = '';
+                        const current = stream.getVideoTracks()[0]?.getSettings()?.deviceId;
+                        if (current) deviceSelect.value = current;
+                    }
+                } catch (e) {
+                    console.error('getUserMedia error', e);
+                    const msg = /denied|NotAllowed/i.test(e.name || e.message)
+                        ? 'Permission caméra refusée — autorise-la dans les paramètres du navigateur'
+                        : 'Impossible d\'accéder à la caméra : ' + (e.message || e.name);
+                    status.innerHTML = `<span style="color:var(--color-danger);">${esc(msg)}</span>`;
+                    captureBtn.disabled = true;
+                    captureBtn.style.opacity = '0.5';
+                }
+            };
+
+            captureBtn.addEventListener('click', () => {
+                if (!stream || !video.videoWidth) return;
+                // Capture la frame actuelle dans le canvas
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                video.style.display = 'none';
+                canvas.style.display = '';
+                actionsShoot.style.display = 'none';
+                actionsReview.style.display = 'flex';
+                status.textContent = 'Vérifie la photo : "Reprendre" ou "Utiliser cette photo"';
+            });
+
+            retakeBtn.addEventListener('click', () => {
+                video.style.display = '';
+                canvas.style.display = 'none';
+                actionsShoot.style.display = 'flex';
+                actionsReview.style.display = 'none';
+                status.textContent = 'Aligne le produit puis clique "Capturer"';
+            });
+
+            useBtn.addEventListener('click', async () => {
+                try {
+                    status.textContent = 'Compression…';
+                    useBtn.disabled = true;
+                    capturedDataUrl = await window.compressImage(canvas, { maxSize: 800, quality: 0.82 });
+
+                    // Injecte dans le formulaire produit
+                    const dataInput = document.getElementById('product-image-data');
+                    if (dataInput) dataInput.value = capturedDataUrl;
+                    const urlInput = document.getElementById('product-image-url');
+                    if (urlInput) urlInput.value = '';
+                    this.currentImagePreview = capturedDataUrl;
+                    const preview = document.getElementById('image-preview-container');
+                    if (preview) {
+                        preview.innerHTML = `<img src="${esc(safeUrl(capturedDataUrl, { allowDataImage: true }))}" class="image-upload-preview" alt="Aperçu">`;
+                    }
+                    this.toast?.('✓ Photo capturée', 'success');
+                    closeModal();
+                } catch (e) {
+                    console.error('Compress error', e);
+                    this.toast?.('Erreur compression : ' + (e.message || e), 'error');
+                    useBtn.disabled = false;
+                }
+            });
+
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            deviceSelect.addEventListener('change', () => startStream(deviceSelect.value));
+
+            // Esc to close
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+
+            // Lance le flux
+            startStream();
+        }
+
+        /**
+         * v5.14.16 — Import en masse de photos depuis un dossier.
+         * Match auto par référence (filename → product.reference, insensible casse).
+         * Affiche un rapport puis demande validation avant commit.
+         */
+        async openBulkPhotoImport() {
+            // Input file caché
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.accept = 'image/*';
+            // webkitdirectory : Chromium/Edge → choix de dossier. Sinon fallback fichiers multiples.
+            try { input.webkitdirectory = true; } catch (_) {}
+            input.style.display = 'none';
+            document.body.appendChild(input);
+
+            input.onchange = async () => {
+                const files = Array.from(input.files || []);
+                input.remove();
+                if (files.length === 0) return;
+
+                // Filtre : que des images
+                const imageFiles = files.filter(f => f.type.startsWith('image/'));
+                if (imageFiles.length === 0) {
+                    this.toast?.('Aucune image trouvée dans la sélection', 'warning');
+                    return;
+                }
+
+                // Loading modal pendant le traitement
+                const loadingModal = document.createElement('div');
+                loadingModal.className = 'fixed inset-0 z-[100] flex items-center justify-center';
+                loadingModal.style.cssText = 'background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);';
+                loadingModal.innerHTML = `
+                    <div class="glass-panel rounded-2xl p-6 text-center" style="min-width: 320px; border: 1px solid var(--border-color);">
+                        <i data-lucide="loader-2" class="w-10 h-10 mx-auto mb-3 animate-spin" style="color: var(--brand-main);"></i>
+                        <div class="font-semibold text-adaptive mb-1">Analyse de <span id="bulk-count">${imageFiles.length}</span> photos…</div>
+                        <div id="bulk-progress" class="text-xs text-adaptive-secondary">Démarrage…</div>
+                    </div>
+                `;
+                document.body.appendChild(loadingModal);
+                if (window.lucide) lucide.createIcons();
+                const progressEl = loadingModal.querySelector('#bulk-progress');
+
+                // Index produits par référence (uppercase, sans accents)
+                const products = window.store.state.products || [];
+                const refIndex = new Map();
+                for (const p of products) {
+                    if (p.reference && !p.archived) {
+                        refIndex.set(String(p.reference).toUpperCase().trim(), p);
+                    }
+                }
+
+                // Catégorise les fichiers
+                const matched = [];        // {file, product, hadImage, dataUrl}
+                const unmatched = [];      // {file, extractedRef}
+                let processed = 0;
+                for (const file of imageFiles) {
+                    processed++;
+                    if (processed % 5 === 0) {
+                        progressEl.textContent = `${processed}/${imageFiles.length} analysées`;
+                        await new Promise(r => setTimeout(r, 0)); // yield to keep UI responsive
+                    }
+                    const ref = window.extractRefFromFilename(file.name);
+                    if (!ref) {
+                        unmatched.push({ file, extractedRef: null });
+                        continue;
+                    }
+                    const product = refIndex.get(ref);
+                    if (!product) {
+                        unmatched.push({ file, extractedRef: ref });
+                        continue;
+                    }
+                    // Compresse l'image
+                    try {
+                        const dataUrl = await window.compressImage(file, { maxSize: 800, quality: 0.82 });
+                        matched.push({ file, product, hadImage: !!(product.image && product.image.length > 50), dataUrl });
+                    } catch (e) {
+                        console.warn('Compression failed for', file.name, e);
+                        unmatched.push({ file, extractedRef: ref, error: 'compression échouée' });
+                    }
+                }
+
+                loadingModal.remove();
+
+                // Aucune correspondance ?
+                if (matched.length === 0) {
+                    this.showConfirm({
+                        title: 'Aucune correspondance',
+                        message: `Aucun des ${imageFiles.length} fichiers ne correspond à un produit. Vérifie que les noms de fichiers commencent par la référence du produit (ex: <strong>B44.jpg</strong> pour le produit <strong>B44</strong>).`,
+                        confirmLabel: 'OK',
+                        cancelLabel: '',
+                        onConfirm: () => {}
+                    });
+                    return;
+                }
+
+                // Modal de rapport
+                const reportModal = document.createElement('div');
+                reportModal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4';
+                reportModal.style.cssText = 'background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);';
+                const replacedCount = matched.filter(m => m.hadImage).length;
+                const newCount = matched.length - replacedCount;
+                const previewSample = matched.slice(0, 12);
+
+                reportModal.innerHTML = `
+                    <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl flex flex-col" style="width: min(720px, 95vw); max-height: 85vh; border: 1px solid var(--border-color);">
+                        <div class="flex items-center justify-between p-4 border-b" style="border-color: var(--border-color); background: var(--bg-tertiary);">
+                            <h3 class="font-bold text-base flex items-center gap-2 text-adaptive">
+                                <i data-lucide="images" class="w-5 h-5" style="color: var(--brand-main);"></i>
+                                Rapport d'import photos
+                            </h3>
+                            <button id="bulk-cancel-x" class="p-2 rounded-lg hover:bg-white/10 btn-press" aria-label="Fermer">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div class="p-4 overflow-y-auto" style="flex:1;">
+                            <div class="grid grid-cols-3 gap-3 mb-4">
+                                <div class="rounded-xl p-3 text-center" style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);">
+                                    <div class="text-2xl font-bold" style="color: var(--brand-main);">${newCount}</div>
+                                    <div class="text-xs text-adaptive-secondary mt-1">Nouvelles photos</div>
+                                </div>
+                                <div class="rounded-xl p-3 text-center" style="background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);">
+                                    <div class="text-2xl font-bold" style="color: #f59e0b;">${replacedCount}</div>
+                                    <div class="text-xs text-adaptive-secondary mt-1">À remplacer</div>
+                                </div>
+                                <div class="rounded-xl p-3 text-center" style="background: rgba(148,163,184,0.12); border: 1px solid rgba(148,163,184,0.3);">
+                                    <div class="text-2xl font-bold" style="color: var(--text-secondary);">${unmatched.length}</div>
+                                    <div class="text-xs text-adaptive-secondary mt-1">Sans match</div>
+                                </div>
+                            </div>
+
+                            ${previewSample.length > 0 ? `
+                                <div class="text-xs text-adaptive-secondary uppercase font-bold mb-2">Aperçu (${Math.min(12, matched.length)} sur ${matched.length})</div>
+                                <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-4">
+                                    ${previewSample.map(m => `
+                                        <div class="relative rounded-lg overflow-hidden aspect-square" style="border: 1px solid var(--border-color);">
+                                            <img src="${esc(safeUrl(m.dataUrl, { allowDataImage: true }))}" alt="${esc(m.product.reference || '')}" style="width:100%; height:100%; object-fit:cover;">
+                                            <div class="absolute bottom-0 left-0 right-0 text-[10px] text-white font-bold px-1 py-0.5 truncate" style="background: rgba(0,0,0,0.7);">${esc(m.product.reference || '')}</div>
+                                            ${m.hadImage ? '<div class="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center" style="background:#f59e0b;" title="Remplacera la photo existante"><i data-lucide="refresh-cw" class="w-2.5 h-2.5 text-white"></i></div>' : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+
+                            ${unmatched.length > 0 ? `
+                                <details class="rounded-xl p-3 mb-2" style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                                    <summary class="cursor-pointer text-sm font-semibold text-adaptive flex items-center gap-2">
+                                        <i data-lucide="alert-circle" class="w-4 h-4" style="color: var(--color-warning, #f59e0b);"></i>
+                                        ${unmatched.length} fichier${unmatched.length > 1 ? 's' : ''} sans correspondance
+                                    </summary>
+                                    <div class="mt-3 text-xs text-adaptive-secondary max-h-32 overflow-y-auto space-y-1 pl-6">
+                                        ${unmatched.slice(0, 50).map(u => `
+                                            <div><code style="font-family:monospace;">${esc(u.file.name)}</code>${u.extractedRef ? ` <span style="opacity:0.6;">(réf extraite : <code>${esc(u.extractedRef)}</code> → non trouvée)</span>` : ' <span style="opacity:0.6;">(réf illisible)</span>'}</div>
+                                        `).join('')}
+                                        ${unmatched.length > 50 ? `<div style="opacity:0.6; font-style:italic;">… et ${unmatched.length - 50} de plus</div>` : ''}
+                                    </div>
+                                </details>
+                            ` : ''}
+
+                            <div class="text-xs text-adaptive-secondary mt-3 flex items-center gap-2">
+                                <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                                Snapshot pris avant import — tu peux annuler depuis Paramètres → Restaurer un snapshot.
+                            </div>
+                        </div>
+                        <div class="flex gap-2 p-4 border-t" style="border-color: var(--border-color); background: var(--bg-tertiary);">
+                            <button id="bulk-cancel" class="flex-1 px-4 py-3 rounded-xl font-semibold btn-press" style="background: var(--bg-primary); border: 1px solid var(--border-color);">
+                                Annuler
+                            </button>
+                            <button id="bulk-confirm" class="flex-1 text-white-force px-4 py-3 rounded-xl font-semibold shadow-lg btn-press flex items-center justify-center gap-2"
+                                    style="background: linear-gradient(135deg, var(--brand-main), var(--brand-dark));">
+                                <i data-lucide="check" class="w-5 h-5"></i>
+                                Valider l'import (${matched.length})
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(reportModal);
+                if (window.lucide) lucide.createIcons();
+
+                const closeReport = () => reportModal.remove();
+                reportModal.querySelector('#bulk-cancel').addEventListener('click', closeReport);
+                reportModal.querySelector('#bulk-cancel-x').addEventListener('click', closeReport);
+                reportModal.addEventListener('click', (e) => { if (e.target === reportModal) closeReport(); });
+
+                reportModal.querySelector('#bulk-confirm').addEventListener('click', () => {
+                    try {
+                        // Snapshot avant modification
+                        window.store._snapshotBefore?.('Avant import photos en masse', { count: matched.length });
+
+                        // Applique : assigne les images aux produits
+                        for (const m of matched) {
+                            m.product.image = m.dataUrl;
+                            m.product.updatedAt = Date.now();
+                        }
+                        window.store.save();
+
+                        // Rafraîchit l'inventaire si on est dessus
+                        if (window.router?.currentPage === 'inventory' || document.getElementById('inventory-table') || document.getElementById('inventory-grouped-list')) {
+                            const pc = document.getElementById('page-container');
+                            if (pc && this.renderInventory) pc.innerHTML = this.renderInventory();
+                            if (window.lucide) lucide.createIcons();
+                        }
+
+                        this.toast?.(`✓ ${matched.length} photo${matched.length > 1 ? 's associées' : ' associée'}`, 'success', 4000);
+                        closeReport();
+                    } catch (e) {
+                        console.error('Bulk import commit error', e);
+                        this.toast?.('Erreur : ' + (e.message || e), 'error');
+                    }
+                });
+            };
+
+            input.click();
+        }
+
+        /**
+         * v5.14.16 — Scanner code-barres via webcam (BarcodeDetector natif Chromium/WebView2).
+         * Affiche une modal avec preview live + cadre vert sur le code détecté.
+         * Auto-close au 1er code détecté.
+         *
+         * @returns {Promise<string|null>} - le code lu (rawValue) ou null si annulé / non supporté
+         */
+        async scanBarcodeWebcam() {
+            if (typeof window.BarcodeDetector === 'undefined') {
+                this.toast?.('Scanner non supporté sur ce navigateur — utilise la saisie manuelle', 'warning', 4000);
+                return null;
+            }
+            const hasCam = await this._isWebcamAvailable();
+            if (!hasCam) {
+                this.toast?.('Aucune caméra détectée', 'warning');
+                return null;
+            }
+
+            // Formats supportés (best-effort, le détecteur ignore ceux qu'il ne connaît pas)
+            const wantedFormats = ['code_128', 'code_39', 'code_93', 'ean_13', 'ean_8', 'qr_code', 'data_matrix', 'upc_a', 'upc_e', 'itf', 'codabar'];
+            let supportedFormats = wantedFormats;
+            try {
+                if (typeof window.BarcodeDetector.getSupportedFormats === 'function') {
+                    const supp = await window.BarcodeDetector.getSupportedFormats();
+                    supportedFormats = wantedFormats.filter(f => supp.includes(f));
+                    if (supportedFormats.length === 0) supportedFormats = supp.slice(0, 8);
+                }
+            } catch (_) {}
+
+            let detector;
+            try {
+                detector = new window.BarcodeDetector({ formats: supportedFormats });
+            } catch (e) {
+                this.toast?.('Scanner indisponible : ' + (e.message || e), 'error');
+                return null;
+            }
+
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 z-[100] flex items-center justify-center';
+                modal.style.cssText = 'background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);';
+                modal.innerHTML = `
+                    <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl" style="width: min(720px, 95vw); border: 1px solid var(--border-color);">
+                        <div class="flex items-center justify-between p-4 border-b" style="border-color: var(--border-color); background: var(--bg-tertiary);">
+                            <h3 class="font-bold text-base flex items-center gap-2 text-adaptive">
+                                <i data-lucide="scan-line" class="w-5 h-5" style="color: var(--brand-main);"></i>
+                                Scanner un code-barres
+                            </h3>
+                            <button id="scan-close" class="p-2 rounded-lg hover:bg-white/10 btn-press" aria-label="Fermer">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div class="p-4">
+                            <div class="relative rounded-xl overflow-hidden bg-black" style="aspect-ratio: 16/10;">
+                                <video id="scan-video" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                                <svg id="scan-overlay" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;"></svg>
+                                <!-- Cadre de viseur -->
+                                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+                                    <div style="width:70%; height:40%; border: 2px solid rgba(16,185,129,0.6); border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.3);"></div>
+                                </div>
+                            </div>
+                            <div id="scan-status" class="text-xs text-adaptive-secondary mt-3 text-center" style="min-height:1.2em;">Initialisation…</div>
+                            <div class="text-xs text-adaptive-secondary mt-2 text-center" style="opacity:0.6;">Formats : ${supportedFormats.join(', ')}</div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                if (window.lucide) lucide.createIcons();
+
+                const video = modal.querySelector('#scan-video');
+                const overlay = modal.querySelector('#scan-overlay');
+                const status = modal.querySelector('#scan-status');
+                let stream = null;
+                let scanning = true;
+                let rafId = null;
+
+                const cleanup = () => {
+                    scanning = false;
+                    if (rafId) cancelAnimationFrame(rafId);
+                    if (stream) stream.getTracks().forEach(t => t.stop());
+                    modal.remove();
+                    document.removeEventListener('keydown', escHandler);
+                };
+                const escHandler = (e) => { if (e.key === 'Escape') { cleanup(); resolve(null); } };
+                document.addEventListener('keydown', escHandler);
+
+                modal.querySelector('#scan-close').addEventListener('click', () => { cleanup(); resolve(null); });
+                modal.addEventListener('click', (e) => { if (e.target === modal) { cleanup(); resolve(null); } });
+
+                (async () => {
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+                            audio: false
+                        });
+                        video.srcObject = stream;
+                        await new Promise(r => video.onloadedmetadata = r);
+                        status.textContent = 'Pointe la caméra sur le code-barres…';
+
+                        const loop = async () => {
+                            if (!scanning || !video.videoWidth) {
+                                if (scanning) rafId = requestAnimationFrame(loop);
+                                return;
+                            }
+                            try {
+                                const codes = await detector.detect(video);
+                                if (codes && codes.length > 0) {
+                                    const code = codes[0];
+                                    const raw = code.rawValue || '';
+                                    // Dessine le cadre vert sur le code détecté
+                                    if (code.cornerPoints && code.cornerPoints.length === 4) {
+                                        const scaleX = overlay.clientWidth / video.videoWidth;
+                                        const scaleY = overlay.clientHeight / video.videoHeight;
+                                        const pts = code.cornerPoints.map(p => `${p.x * scaleX},${p.y * scaleY}`).join(' ');
+                                        overlay.innerHTML = `<polygon points="${pts}" fill="rgba(16,185,129,0.25)" stroke="#10b981" stroke-width="4" />`;
+                                    }
+                                    status.innerHTML = `<strong style="color:var(--brand-main);">✓ Détecté : ${esc(raw)}</strong>`;
+                                    if (navigator.vibrate) try { navigator.vibrate(60); } catch (_) {}
+                                    // Petit délai pour que l'utilisateur voie le feedback visuel
+                                    setTimeout(() => { cleanup(); resolve(raw); }, 350);
+                                    return;
+                                }
+                            } catch (e) {
+                                // detector.detect() peut throw sur frame invalide, on continue
+                            }
+                            if (scanning) rafId = requestAnimationFrame(loop);
+                        };
+                        loop();
+                    } catch (e) {
+                        console.error('scan getUserMedia error', e);
+                        const msg = /denied|NotAllowed/i.test(e.name || e.message)
+                            ? 'Permission caméra refusée'
+                            : 'Erreur caméra : ' + (e.message || e.name);
+                        status.innerHTML = `<span style="color:var(--color-danger);">${esc(msg)}</span>`;
+                    }
+                })();
+            });
+        }
+
+        /* ════════════════════════════════════════════════════════════════════════════════
+           v5.14.15 — SCANNER CODE-BARRES NATIF (Android via Capacitor ML Kit)
            ──────────────────────────────────────────────────────────────────────────────
            - Disponible UNIQUEMENT en mode Capacitor (Android/iOS). Sur Tauri (Windows/Mac)
-             ou navigateur web, scanBarcode() retourne null et affiche un toast info.
+             ou navigateur web, scanBarcode() route vers scanBarcodeWebcam (BarcodeDetector).
            - Le `import('@capacitor-mlkit/barcode-scanning')` est dynamique → Tauri ne le
              charge jamais (le bundler ne le résout pas, et le code n'est exécuté que si
              _isCapacitor() === true).
@@ -27247,11 +27982,16 @@ td{padding:12px;border-bottom:1px solid #eee}
         /**
          * Lance le scanner natif et retourne le code lu (ou null si annulé / non dispo).
          * Demande la permission caméra si nécessaire.
+         * v5.14.16 : route vers scanBarcodeWebcam (BarcodeDetector) sur Tauri/desktop.
          * @returns {Promise<string|null>}
          */
         async scanBarcode() {
+            // v5.14.16 — Sur Tauri/desktop ou browser avec BarcodeDetector → utilise la webcam
             if (!this._isCapacitor()) {
-                this.toast?.('Scanner disponible uniquement sur l\'app mobile', 'info');
+                if (typeof window.BarcodeDetector !== 'undefined') {
+                    return await this.scanBarcodeWebcam();
+                }
+                this.toast?.('Scanner non supporté sur cette plateforme — utilise la saisie manuelle', 'info');
                 return null;
             }
             try {

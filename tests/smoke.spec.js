@@ -518,4 +518,132 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         });
         expect(result.hadOne).toBe(true);
     });
+
+    // ═══════════════════════════════════════════════════════════════
+    // 6xx — v5.14.16 WORKFLOW PHOTO + SCANNER WEBCAM
+    // ═══════════════════════════════════════════════════════════════
+
+    test('601. extractRefFromFilename : extrait correctement la référence', async ({ page }) => {
+        const result = await page.evaluate(() => ({
+            simple:     window.extractRefFromFilename('B44.jpg'),
+            withDash:   window.extractRefFromFilename('B44-1.jpg'),
+            withUnder:  window.extractRefFromFilename('B44_main.png'),
+            withParen:  window.extractRefFromFilename('B44 (2).jpeg'),
+            withSuffix: window.extractRefFromFilename('PC22-front.webp'),
+            empty:      window.extractRefFromFilename(''),
+            nullInput:  window.extractRefFromFilename(null),
+            noExt:      window.extractRefFromFilename('C91'),
+            lowercase:  window.extractRefFromFilename('b44.jpg')
+        }));
+        expect(result.simple).toBe('B44');
+        expect(result.withDash).toBe('B44');
+        expect(result.withUnder).toBe('B44');
+        expect(result.withParen).toBe('B44');
+        expect(result.withSuffix).toBe('PC22');
+        expect(result.empty).toBeNull();
+        expect(result.nullInput).toBeNull();
+        expect(result.noExt).toBe('C91');
+        expect(result.lowercase).toBe('B44'); // uppercase forcé
+    });
+
+    test('602. compressImage : output < 200KB pour image moyenne (1024×1024 PNG)', async ({ page }) => {
+        const result = await page.evaluate(async () => {
+            // Génère une image PNG 1024×1024 gradient (≈ 1-3 MB en PNG natif)
+            const sourceCanvas = document.createElement('canvas');
+            sourceCanvas.width = 1024;
+            sourceCanvas.height = 1024;
+            const ctx = sourceCanvas.getContext('2d');
+            // Gradient + bruit pour éviter compression trop facile
+            const grad = ctx.createLinearGradient(0, 0, 1024, 1024);
+            grad.addColorStop(0, '#10b981');
+            grad.addColorStop(0.5, '#ef4444');
+            grad.addColorStop(1, '#3b82f6');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 1024, 1024);
+            // Bruit
+            for (let i = 0; i < 5000; i++) {
+                ctx.fillStyle = `rgba(${Math.random()*255|0},${Math.random()*255|0},${Math.random()*255|0},0.5)`;
+                ctx.fillRect(Math.random()*1024, Math.random()*1024, 4, 4);
+            }
+            const compressed = await window.compressImage(sourceCanvas, { maxSize: 800, quality: 0.82 });
+            // Mesure la taille du data URL (base64) → octets approx
+            const base64 = compressed.split(',')[1] || '';
+            const bytes = (base64.length * 3) / 4;
+            return {
+                isDataUrl: compressed.startsWith('data:image/jpeg'),
+                bytes,
+                kb: Math.round(bytes / 1024)
+            };
+        });
+        expect(result.isDataUrl).toBe(true);
+        expect(result.bytes).toBeLessThan(200 * 1024); // < 200 KB
+        expect(result.bytes).toBeGreaterThan(1000);   // non-vide
+    });
+
+    test('603. compressImage : préserve le ratio (1600×800 → max 800)', async ({ page }) => {
+        const result = await page.evaluate(async () => {
+            const c = document.createElement('canvas');
+            c.width = 1600; c.height = 800;
+            c.getContext('2d').fillStyle = '#10b981';
+            c.getContext('2d').fillRect(0, 0, 1600, 800);
+            const out = await window.compressImage(c, { maxSize: 800, quality: 0.82 });
+            // Décode pour mesurer
+            const img = new Image();
+            img.src = out;
+            await new Promise(r => { img.onload = r; });
+            return { w: img.naturalWidth, h: img.naturalHeight };
+        });
+        // Le grand côté doit être 800, ratio 2:1 conservé → 800×400
+        expect(result.w).toBe(800);
+        expect(result.h).toBe(400);
+    });
+
+    test('604. _isScannerAvailable : détection cohérente', async ({ page }) => {
+        const result = await page.evaluate(() => ({
+            hasMethod: typeof window.ui._isScannerAvailable === 'function',
+            hasBarcodeDetector: typeof window.BarcodeDetector !== 'undefined',
+            scannerAvail: window.ui._isScannerAvailable()
+        }));
+        expect(result.hasMethod).toBe(true);
+        // Sur Chromium récent, BarcodeDetector existe → scanner doit être dispo
+        if (result.hasBarcodeDetector) expect(result.scannerAvail).toBe(true);
+    });
+
+    test('605. scanBarcodeWebcam : graceful degradation sans BarcodeDetector', async ({ page }) => {
+        const result = await page.evaluate(async () => {
+            // Masque temporairement BarcodeDetector
+            const saved = window.BarcodeDetector;
+            try { delete window.BarcodeDetector; } catch (_) {}
+            const ret = await window.ui.scanBarcodeWebcam();
+            // Restore
+            if (saved) window.BarcodeDetector = saved;
+            return { ret };
+        });
+        expect(result.ret).toBeNull(); // pas d'erreur, juste null
+    });
+
+    test('606. openWebcamPhotoModal : sans caméra → toast warning + pas de modal', async ({ page }) => {
+        const result = await page.evaluate(async () => {
+            // Force _isWebcamAvailable → false
+            const orig = window.ui._isWebcamAvailable;
+            window.ui._isWebcamAvailable = async () => false;
+            await window.ui.openWebcamPhotoModal();
+            await new Promise(r => setTimeout(r, 100));
+            const modalCount = document.querySelectorAll('#webcam-video').length;
+            window.ui._isWebcamAvailable = orig;
+            return { modalCount };
+        });
+        expect(result.modalCount).toBe(0); // pas de modal créée
+    });
+
+    test('607. openBulkPhotoImport : méthode existe et callable', async ({ page }) => {
+        const result = await page.evaluate(() => ({
+            hasMethod: typeof window.ui.openBulkPhotoImport === 'function',
+            hasCompressImage: typeof window.compressImage === 'function',
+            hasExtractRef: typeof window.extractRefFromFilename === 'function'
+        }));
+        expect(result.hasMethod).toBe(true);
+        expect(result.hasCompressImage).toBe(true);
+        expect(result.hasExtractRef).toBe(true);
+    });
 });

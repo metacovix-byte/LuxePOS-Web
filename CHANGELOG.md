@@ -5,6 +5,28 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.16] — 2026-05-18
+
+### Ajouté — Workflow photo + scanner webcam (parité Tauri ↔ Android)
+- **Capture webcam dans la modal produit** : bouton "📸 Caméra" à côté de "Choisir un fichier".
+  Ouvre une preview live (getUserMedia), capture → review (reprendre/utiliser) → compression auto
+  (max 800×800px, JPEG qualité 0.82, ~50–100 KB). Sélecteur multi-caméras si plusieurs détectées.
+  Fallback gracieux "Aucune caméra détectée" si aucune webcam.
+- **Import en masse de photos** (Inventaire → bouton "📁 Photos en masse") : pick d'un dossier
+  (webkitdirectory) ou fichiers multiples. Match auto par référence (B44.jpg → produit B44,
+  insensible casse, gère `-1`, `_main`, ` (2)` etc.). Rapport visuel : ✅ nouvelles, 🔄 remplacements,
+  ⚠ sans match. Aperçu 12 photos avant commit. Snapshot pris avant import (undo possible).
+- **Paste depuis presse-papier** (Ctrl+V dans la modal produit) : extrait l'image, compresse,
+  l'assigne au produit. Toast "✓ Photo collée".
+- **Scanner code-barres webcam** (Tauri / Windows / Mac) : utilise l'API native
+  `BarcodeDetector` (Chromium/WebView2). Modal pleine largeur avec viseur vert qui suit le code
+  détecté. Formats : code_128, code_39, ean_13, ean_8, qr_code, data_matrix, upc_a, upc_e.
+  Auto-close à la détection. Le bouton "Scanner" est désormais visible sur desktop ET mobile.
+- **Utilitaire `compressImage(source, opts)`** exposé globalement (window.compressImage) :
+  accepte Blob / File / Image / Video / Canvas → data URL JPEG ou WebP compressé.
+- **7 tests Playwright** ajoutés (601–607) : extractRefFromFilename, compression < 200KB,
+  ratio préservé, BarcodeDetector graceful degradation, modal sans caméra.
+
 ## [5.14.10] — 2026-05-06
 
 ### Ajouté
