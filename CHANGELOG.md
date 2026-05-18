@@ -5,6 +5,43 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.17] — 2026-05-18
+
+### Ajouté — BOM (Bill of Materials) finalisée : composants ↔ bijoux finis
+La feature **Composants & BOM** (scaffold Store complet depuis v5.0) est maintenant
+pleinement exploitable côté UI. Cible : artisane bijoux fantaisie (acier 316L + perles
+AliExpress) qui veut un coût de revient toujours juste sans recalculer à la main.
+
+- **Section BOM dans la modal d'édition produit** : après le champ "Coût Achat", un
+  bouton "+ Composition (BOM)" / "Modifier la composition" ouvre l'éditeur BOM, avec
+  badge "AUTO BOM" si une composition existe. Affiche le nombre de composants liés et
+  l'état "coût recalculé auto".
+- **Page Atelier : filtres + recherche** : barre d'outils glassmorphism avec recherche
+  full-text (nom + fournisseur + réf + notes), filtre par type (perle / chaîne /
+  fermoir / anneau / pendentif / fil / autre) et filtre stock (tous / stock faible /
+  rupture). Compteur "X/Y composants" et bouton "Réinitialiser".
+- **Wizard coûts : bouton "Recalculer depuis les BOM"** : pour les pièces ayant une
+  composition définie, le coût est recalculé à partir de la somme(composant.unitCost
+  × qty). Précis vs les suggestions par catégorie. Snapshot pris avant.
+- **Dashboard alerte BOM orpheline** : nouvelle todo "X composition(s) avec composant
+  supprimé" qui pointe vers l'onglet Compositions de la page Atelier.
+- **APP_CONFIG.VERSION → 5.14.17** (était figé à 5.11 depuis longtemps — mise à jour
+  rétroactive pour cohérence des affichages).
+- **8 tests Playwright BOM** (701–708) : create/update/delete composant, propagation
+  coût quand prix composant change, blocage suppression si lié à un BOM, alertes stock
+  faible, réception commande fournisseur (stock + unitCost rafraîchi), rendu page
+  Atelier, filtres composants.
+
+### Existant — confirmation du scaffolding Store
+Les méthodes suivantes (déjà présentes depuis v5.0) sont désormais documentées et
+testées :
+- `Store.createComponent / updateComponent / deleteComponent / getLowStockComponents`
+- `Store.getBOM / setBOM / recomputeProductCostFromBOM / recomputeProductsUsingComponent`
+- `Store.createSupplierOrder / updateSupplierOrder / receiveSupplierOrder / deleteSupplierOrder`
+- `Store.getComponentTypes / getSupplierOrderStatuses`
+- Modales `showComponentModal`, `showSupplierOrderModal`, `showBomEditor`
+- Route `atelier` (déjà branchée dans le router + le menu Plus)
+
 ## [5.14.16] — 2026-05-18
 
 ### Ajouté — Workflow photo + scanner webcam (parité Tauri ↔ Android)

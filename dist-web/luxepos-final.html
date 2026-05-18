@@ -263,7 +263,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
          ═══════════════════════════════════════════════════════════════════════ -->
     <script>
         const APP_CONFIG = Object.freeze({
-            VERSION: '5.11',
+            VERSION: '5.14.17',
 
             // ── Durées (en millisecondes)
             TIME: Object.freeze({
@@ -10184,6 +10184,20 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                     cta: 'Atelier', onclick: "window.router.navigate('atelier')"
                 });
 
+                // v5.14.17 — BOM orphelines : composition contenant des composants supprimés
+                try {
+                    const allComponents = s.components || [];
+                    const cmpById = new Map(allComponents.map(c => [c.id, c]));
+                    const orphans = (s.boms || []).filter(b =>
+                        (b.items || []).some(it => !cmpById.has(it.componentId))
+                    );
+                    if (orphans.length > 0) todos.push({
+                        icon: 'alert-circle', color: '#dc2626',
+                        text: `${orphans.length} composition${orphans.length > 1 ? 's' : ''} avec composant supprimé`,
+                        cta: 'Atelier', onclick: "window.router.navigate('atelier'); setTimeout(()=>window.ui.renderAtelier('boms'),120);"
+                    });
+                } catch (e) {}
+
                 const expiringRes = (window.store.getReservationsExpiringSoon?.(2) || []).length;
                 if (expiringRes > 0) todos.push({
                     icon: 'bookmark', color: '#8b5cf6',
@@ -15642,6 +15656,7 @@ service cloud.firestore {
                                 <label for="product-cost" class="block text-xs uppercase text-gray-500 mb-2 font-bold flex items-center gap-1">
                                     Coût Achat *
                                     <span class="help-icon" data-tooltip="Prix payé au fournisseur (sert au calcul de marge)">?</span>
+                                    ${isEdit && window.store?.getBOM?.(productId) ? `<span style="font-size:0.6rem;background:rgba(16,185,129,0.18);color:#10b981;padding:2px 6px;border-radius:6px;letter-spacing:0.5px;">AUTO BOM</span>` : ''}
                                 </label>
                                 <input
                                     id="product-cost"
@@ -15655,6 +15670,24 @@ service cloud.firestore {
                                     onblur="window.ui.validateField(this, {min: 0, label: 'Coût achat'}); window.ui.checkMarginHint()"
                                     class="glass-input w-full p-3 rounded-lg">
                                 <div id="margin-hint" class="field-hint info" style="display:none"></div>
+                                ${isEdit ? `
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                    <button type="button"
+                                            onclick="window.ui.showBomEditor('${productId}')"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 btn-press"
+                                            style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);"
+                                            title="Définir la composition de ce bijou (perles, chaîne, fermoir…)">
+                                        <i data-lucide="list-tree" class="w-3.5 h-3.5"></i>
+                                        ${window.store?.getBOM?.(productId) ? 'Modifier la composition' : '+ Composition (BOM)'}
+                                    </button>
+                                    ${window.store?.getBOM?.(productId) ? `
+                                        <span class="text-xs opacity-70">
+                                            ${(window.store.getBOM(productId).items || []).length} composant(s)
+                                            ${product.costAutoFromBOM ? '· coût recalculé auto' : ''}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                ` : ''}
                             </div>
 
                             <!-- Couleurs disponibles -->
@@ -18575,10 +18608,17 @@ service cloud.firestore {
                         <div class="rounded-lg p-3 text-sm" style="background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.25);">
                             💡 <strong>Coûts pré-remplis intelligents</strong> selon ton activité (bijoux acier 316L + composants AliExpress).
                             <div class="text-xs opacity-80 mt-1">Vérifie / ajuste les chiffres puis clique <strong>Appliquer</strong> par catégorie ou <strong>Tout appliquer</strong> en bas. Plafonné à 40% du prix moyen pour préserver ta marge.</div>
-                            <button onclick="window.ui._costWizardPrefillAll()" class="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                                    style="background: rgba(56,189,248,0.2); color: #38bdf8; border: 1px solid rgba(56,189,248,0.4);">
-                                ✨ Pré-remplir toutes les catégories avec les suggestions
-                            </button>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button onclick="window.ui._costWizardPrefillAll()" class="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                                        style="background: rgba(56,189,248,0.2); color: #38bdf8; border: 1px solid rgba(56,189,248,0.4);">
+                                    ✨ Pré-remplir toutes les catégories avec les suggestions
+                                </button>
+                                <button onclick="window.ui._costWizardRecalcFromBOM()" class="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                                        style="background: rgba(16,185,129,0.18); color: #10b981; border: 1px solid rgba(16,185,129,0.35);"
+                                        title="Recalcule le coût des produits ayant une composition (BOM) définie">
+                                    🧱 Recalculer depuis les BOM
+                                </button>
+                            </div>
                         </div>
                         ${[...byCategory.entries()].sort((a, b) => {
                             // v5.14.12 — Tri par impact financier décroissant (catégories où la saisie a le plus de valeur).
@@ -18716,6 +18756,36 @@ service cloud.firestore {
                 if (input) { input.value = suggested; filled++; }
             }
             this.toast?.(`✨ ${filled} catégorie${filled > 1 ? 's' : ''} pré-remplie${filled > 1 ? 's' : ''} — vérifie & clique Appliquer`, 'info', 4000);
+        }
+
+        /**
+         * v5.14.17 — Recalcule le coût des produits ayant une BOM définie depuis
+         * leur composition (somme composant.unitCost × qty). Plus précis que
+         * les suggestions par catégorie.
+         */
+        _costWizardRecalcFromBOM() {
+            const s = window.store.state;
+            const boms = s.boms || [];
+            if (boms.length === 0) {
+                this.toast?.('Aucune composition (BOM) définie. Crée d\'abord des composants et lie-les à tes pièces depuis l\'inventaire.', 'info', 5000);
+                return;
+            }
+            window.store._snapshotBefore?.('Avant recalcul coûts depuis BOM');
+            let touched = 0;
+            for (const bom of boms) {
+                if (!bom.items || bom.items.length === 0) continue;
+                const before = (s.products || []).find(p => p.id === bom.productId)?.cost;
+                const newCost = window.store.recomputeProductCostFromBOM(bom.productId);
+                if (newCost != null) touched++;
+            }
+            window.store.save();
+            if (touched > 0) {
+                this.toast?.(`✅ ${touched} pièce${touched > 1 ? 's' : ''} recalculée${touched > 1 ? 's' : ''} depuis leur composition`, 'success', 5000);
+                document.getElementById('cost-wizard-overlay')?.remove();
+                setTimeout(() => this.showCostWizard(), 100);
+            } else {
+                this.toast?.('Aucune BOM ne contient de composants — édite-les d\'abord', 'warning', 4000);
+            }
         }
 
         /**
@@ -25343,7 +25413,53 @@ td{padding:12px;border-bottom:1px solid #eee}
                     </div>`;
                 }
                 const types = window.store.getComponentTypes();
-                const rows = components.map(c => {
+                // v5.14.17 — Filtres + recherche
+                const query = (this._atelierQuery || '').toLowerCase().trim();
+                const typeFilter = this._atelierTypeFilter || 'all';
+                const stockFilter = this._atelierStockFilter || 'all';
+                const filteredComponents = components.filter(c => {
+                    if (typeFilter !== 'all' && c.type !== typeFilter) return false;
+                    if (stockFilter === 'low' && (c.stock || 0) > (c.reorderThreshold || 0)) return false;
+                    if (stockFilter === 'out' && (c.stock || 0) > 0) return false;
+                    if (query) {
+                        const hay = (c.name + ' ' + (c.supplier || '') + ' ' + (c.supplierRef || '') + ' ' + (c.notes || '')).toLowerCase();
+                        if (!hay.includes(query)) return false;
+                    }
+                    return true;
+                });
+                const toolbar = `
+                <div class="glass-panel p-3 rounded-2xl mb-3 flex flex-wrap items-center gap-2">
+                    <div class="relative flex-1 min-w-[180px]">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50"></i>
+                        <input id="atelier-search" type="search" value="${esc(this._atelierQuery || '')}" placeholder="Rechercher un composant (nom, fournisseur, réf)…"
+                               oninput="window.ui._atelierQuery = this.value; window.ui._refreshAtelierComponents();"
+                               class="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm">
+                    </div>
+                    <select id="atelier-type-filter" onchange="window.ui._atelierTypeFilter = this.value; window.ui._refreshAtelierComponents();"
+                            class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm">
+                        <option value="all" ${typeFilter === 'all' ? 'selected' : ''}>Tous types</option>
+                        ${types.map(t => `<option value="${t.id}" ${typeFilter === t.id ? 'selected' : ''}>${t.label}</option>`).join('')}
+                    </select>
+                    <select id="atelier-stock-filter" onchange="window.ui._atelierStockFilter = this.value; window.ui._refreshAtelierComponents();"
+                            class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm">
+                        <option value="all" ${stockFilter === 'all' ? 'selected' : ''}>Tous stocks</option>
+                        <option value="low" ${stockFilter === 'low' ? 'selected' : ''}>⚠ Stock faible</option>
+                        <option value="out" ${stockFilter === 'out' ? 'selected' : ''}>🚫 Rupture</option>
+                    </select>
+                    ${(query || typeFilter !== 'all' || stockFilter !== 'all') ? `
+                        <button onclick="window.ui._atelierQuery=''; window.ui._atelierTypeFilter='all'; window.ui._atelierStockFilter='all'; window.ui._refreshAtelierComponents();"
+                                class="px-3 py-2 rounded-lg text-xs bg-white/10 hover:bg-white/20 btn-press">Réinitialiser</button>
+                    ` : ''}
+                    <span class="text-xs opacity-60 ml-auto">${filteredComponents.length}/${components.length} composant(s)</span>
+                </div>`;
+                if (filteredComponents.length === 0) {
+                    return toolbar + `
+                    <div class="text-center py-12 opacity-60 glass-panel rounded-2xl">
+                        <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+                        <p class="text-sm">Aucun composant ne correspond aux filtres actuels.</p>
+                    </div>`;
+                }
+                const rows = filteredComponents.map(c => {
                     const type = types.find(t => t.id === c.type) || types[types.length - 1];
                     const isLow = (c.stock || 0) <= (c.reorderThreshold || 0);
                     const stockVal = (c.stock || 0) * (c.unitCost || 0);
@@ -25375,8 +25491,8 @@ td{padding:12px;border-bottom:1px solid #eee}
                         </td>
                     </tr>`;
                 }).join('');
-                return `
-                <div class="glass-panel rounded-2xl overflow-hidden">
+                return toolbar + `
+                <div id="atelier-components-content" class="glass-panel rounded-2xl overflow-hidden">
                     <table class="w-full text-sm">
                         <thead class="bg-white/5">
                             <tr class="text-[10px] uppercase tracking-wider opacity-70">
@@ -25519,6 +25635,29 @@ td{padding:12px;border-bottom:1px solid #eee}
                     </div>` : ''}
                 </div>`;
             if (window.lucide) lucide.createIcons();
+        }
+
+        /**
+         * v5.14.17 — Re-rendu de l'onglet composants sans reload complet
+         * (préserve les états des filtres et la position de scroll).
+         */
+        _refreshAtelierComponents() {
+            // On rerend la page entière car les filtres modifient aussi la toolbar
+            // (les sélecteurs sont stockés sur this._atelierQuery / Filter).
+            // Préserver le scroll y et le focus actif.
+            const scrollY = window.scrollY;
+            const focused = document.activeElement?.id;
+            this.renderAtelier(this._atelierTab || 'components');
+            if (focused) {
+                const el = document.getElementById(focused);
+                if (el) {
+                    el.focus();
+                    if (el.value) {
+                        try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) {}
+                    }
+                }
+            }
+            window.scrollTo(0, scrollY);
         }
 
         /**

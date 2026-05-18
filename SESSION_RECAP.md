@@ -1,6 +1,32 @@
 # 📝 Sessions cumulées · 2026-05-07 → 2026-05-18
 
-## 🎯 État final 2026-05-18 : Pipeline complète + Marketing pro + Mobile + Analytics
+## 🎯 État final 2026-05-18 : Pipeline complète + Marketing pro + Mobile + Analytics + BOM
+
+### 🆕 Livré 2026-05-18 (soir) — v5.14.17 BOM finalisée
+
+Le scaffolding Store BOM/Composants/Fournisseurs (déjà en place depuis v5.0) est
+maintenant pleinement exploitable côté UI :
+
+- **Modal d'édition produit** : bouton "+ Composition (BOM)" / "Modifier la
+  composition" juste sous le champ Coût Achat. Badge "AUTO BOM" si une composition
+  existe. L'éditeur BOM existant (`showBomEditor`) est ouvert avec autocomplete sur
+  les composants et preview du coût calculé en temps réel.
+- **Page Atelier** : barre de filtres (recherche full-text + type + niveau de stock)
+  + compteur `filtrés/total`. Bouton "Réinitialiser" si filtres actifs.
+- **Wizard coûts** : nouveau bouton "🧱 Recalculer depuis les BOM" qui recalcule
+  uniquement les produits ayant une composition, plus précis que les suggestions
+  par catégorie.
+- **Dashboard** : nouvelle alerte "X composition(s) avec composant supprimé".
+- **APP_CONFIG.VERSION** : aligné à 5.14.17 (était figé à 5.11).
+- **8 tests Playwright BOM (701–708)** dans `tests/smoke.spec.js`.
+
+**Test rapide Maëlle** :
+1. Atelier → "+ Composant" → "Perle turquoise 8mm", type perle, prix 0.42 EUR, stock 200, seuil 20
+2. Atelier → "+ Composant" → "Chaîne acier 316L", type chaîne, prix 1.20 EUR, stock 50, seuil 10
+3. Inventaire → édite un bracelet → bouton "+ Composition" → ajoute 6× perle + 1× chaîne → enregistre
+4. Le coût du bracelet passe automatiquement à `6×0.42 + 1×1.20 = 3.72 EUR`
+5. Modifie le prix de la perle à 0.50 EUR → tous les bijoux liés voient leur coût recalculé
+6. Atelier → "+ Commande fournisseur" → 100× perles à 0.40 EUR → "Marquer reçu" → stock += 100 + coût mis à jour à 0.40
 
 ### 🆕 Livré cette session (2026-05-18)
 

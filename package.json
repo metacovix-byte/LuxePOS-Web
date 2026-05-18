@@ -1,6 +1,6 @@
 {
   "name": "luxepos-web",
-  "version": "5.14.16",
+  "version": "5.14.17",
   "description": "",
   "main": "playwright.config.js",
   "directories": {

@@ -646,4 +646,193 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(result.hasCompressImage).toBe(true);
         expect(result.hasExtractRef).toBe(true);
     });
+
+    // ═══════════════════════════════════════════════════════════════
+    // 7xx — BOM / Composants (v5.14.17)
+    // ═══════════════════════════════════════════════════════════════
+
+    test('701. Store : createComponent → composant ajouté à state.components', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const before = (window.store.state.components || []).length;
+            const res = window.store.createComponent({
+                name: 'TEST_Perle_701',
+                type: 'perle',
+                unitCost: 0.42,
+                stock: 100,
+                reorderThreshold: 10,
+                supplier: 'AliExpress',
+                currency: 'EUR'
+            });
+            const after = (window.store.state.components || []).length;
+            // Cleanup
+            if (res.ok) {
+                window.store.state.components = window.store.state.components.filter(c => c.id !== res.component.id);
+                window.store.save();
+            }
+            return { ok: res.ok, hasComponent: !!res.component, before, after, name: res.component?.name };
+        });
+        expect(result.ok).toBe(true);
+        expect(result.hasComponent).toBe(true);
+        expect(result.after).toBe(result.before + 1);
+        expect(result.name).toBe('TEST_Perle_701');
+    });
+
+    test('702. setBOM + recomputeProductCostFromBOM : coût produit recalculé', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            // Crée 2 composants + 1 produit isolé
+            const c1 = window.store.createComponent({ name: 'TEST_C1', type: 'perle', unitCost: 1.5, stock: 10 });
+            const c2 = window.store.createComponent({ name: 'TEST_C2', type: 'chaine', unitCost: 3, stock: 10 });
+            const products = window.store.state.products;
+            const product = { id: 'test_prod_702', name: 'Bracelet test BOM', category: 'Bracelets', stock: 1, price: 30, cost: 0, archived: false };
+            products.push(product);
+            // BOM : 2× C1 + 1× C2 => 2×1.5 + 1×3 = 6
+            window.store.setBOM(product.id, [
+                { componentId: c1.component.id, qty: 2 },
+                { componentId: c2.component.id, qty: 1 }
+            ]);
+            const finalCost = (window.store.state.products.find(p => p.id === product.id) || {}).cost;
+            const isAuto = (window.store.state.products.find(p => p.id === product.id) || {}).costAutoFromBOM;
+            // Cleanup
+            window.store.state.products = products.filter(p => p.id !== product.id);
+            window.store.state.boms = (window.store.state.boms || []).filter(b => b.productId !== product.id);
+            window.store.state.components = window.store.state.components.filter(c => c.id !== c1.component.id && c.id !== c2.component.id);
+            window.store.save();
+            return { finalCost, isAuto };
+        });
+        expect(result.finalCost).toBe(6);
+        expect(result.isAuto).toBe(true);
+    });
+
+    test('703. updateComponent : changement de coût propage aux produits liés', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const c = window.store.createComponent({ name: 'TEST_C703', type: 'perle', unitCost: 1, stock: 100 });
+            const products = window.store.state.products;
+            const product = { id: 'test_prod_703', name: 'Test propage', category: 'Tests', stock: 1, price: 20, cost: 0, archived: false };
+            products.push(product);
+            window.store.setBOM(product.id, [{ componentId: c.component.id, qty: 5 }]);
+            const costBefore = window.store.state.products.find(p => p.id === product.id).cost; // 5×1 = 5
+            // Change le prix du composant à 2 → doit recalculer à 10
+            window.store.updateComponent(c.component.id, { unitCost: 2 });
+            const costAfter = window.store.state.products.find(p => p.id === product.id).cost;
+            // Cleanup
+            window.store.state.products = products.filter(p => p.id !== product.id);
+            window.store.state.boms = (window.store.state.boms || []).filter(b => b.productId !== product.id);
+            window.store.state.components = window.store.state.components.filter(x => x.id !== c.component.id);
+            window.store.save();
+            return { costBefore, costAfter };
+        });
+        expect(result.costBefore).toBe(5);
+        expect(result.costAfter).toBe(10);
+    });
+
+    test('704. deleteComponent bloque si utilisé dans une BOM', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const c = window.store.createComponent({ name: 'TEST_C704', type: 'fermoir', unitCost: 0.5, stock: 50 });
+            const products = window.store.state.products;
+            const product = { id: 'test_prod_704', name: 'Test delete', category: 'Tests', stock: 1, price: 10, cost: 0, archived: false };
+            products.push(product);
+            window.store.setBOM(product.id, [{ componentId: c.component.id, qty: 1 }]);
+            // Tente de supprimer → doit échouer
+            const delResult = window.store.deleteComponent(c.component.id);
+            // Cleanup
+            window.store.state.boms = (window.store.state.boms || []).filter(b => b.productId !== product.id);
+            window.store.state.products = products.filter(p => p.id !== product.id);
+            window.store.state.components = window.store.state.components.filter(x => x.id !== c.component.id);
+            window.store.save();
+            return delResult;
+        });
+        expect(result.ok).toBe(false);
+        expect(result.error).toMatch(/utilis/i);
+    });
+
+    test('705. getLowStockComponents : seuil = stock retourne le composant', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const c1 = window.store.createComponent({ name: 'TEST_LOW_705', type: 'perle', unitCost: 1, stock: 3, reorderThreshold: 5 });
+            const c2 = window.store.createComponent({ name: 'TEST_HIGH_705', type: 'perle', unitCost: 1, stock: 50, reorderThreshold: 5 });
+            const low = window.store.getLowStockComponents();
+            const lowNames = low.map(c => c.name);
+            // Cleanup
+            window.store.state.components = window.store.state.components.filter(x => x.id !== c1.component.id && x.id !== c2.component.id);
+            window.store.save();
+            return { lowIncludesC1: lowNames.includes('TEST_LOW_705'), lowIncludesC2: lowNames.includes('TEST_HIGH_705') };
+        });
+        expect(result.lowIncludesC1).toBe(true);
+        expect(result.lowIncludesC2).toBe(false);
+    });
+
+    test('706. receiveSupplierOrder : augmente le stock + met à jour unitCost', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const c = window.store.createComponent({ name: 'TEST_C706', type: 'perle', unitCost: 1, stock: 10 });
+            const ord = window.store.createSupplierOrder({
+                supplier: 'AliExpress',
+                items: [{ componentId: c.component.id, qty: 50, unitCost: 1.25 }],
+                status: 'shipped'
+            });
+            const recv = window.store.receiveSupplierOrder(ord.order.id);
+            const refresh = window.store.state.components.find(x => x.id === c.component.id);
+            const stockAfter = refresh.stock;
+            const costAfter = refresh.unitCost;
+            const orderStatus = window.store.state.supplierOrders.find(o => o.id === ord.order.id).status;
+            // Cleanup
+            window.store.state.supplierOrders = window.store.state.supplierOrders.filter(o => o.id !== ord.order.id);
+            window.store.state.components = window.store.state.components.filter(x => x.id !== c.component.id);
+            window.store.save();
+            return { ok: recv.ok, stockAfter, costAfter, orderStatus };
+        });
+        expect(result.ok).toBe(true);
+        expect(result.stockAfter).toBe(60); // 10 + 50
+        expect(result.costAfter).toBe(1.25);
+        expect(result.orderStatus).toBe('delivered');
+    });
+
+    test('707. renderAtelier ouvre la page sans erreur', async ({ page }) => {
+        const errors = [];
+        page.on('pageerror', (e) => errors.push(e.message));
+        await page.evaluate(() => window.router.navigate('atelier'));
+        await page.waitForTimeout(400);
+        const visible = await page.evaluate(() => {
+            const c = document.getElementById('page-container');
+            return c && c.innerHTML.includes('Atelier');
+        });
+        expect(visible).toBe(true);
+        expect(errors.filter(e => !e.toLowerCase().includes('lucide'))).toHaveLength(0);
+    });
+
+    test('708. UI filtres atelier : query + type + stock filter modifient l\'affichage', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            // Crée 3 composants pour tester filtres
+            window.store.createComponent({ name: 'FILTER_perle_x', type: 'perle', unitCost: 1, stock: 100, reorderThreshold: 5 });
+            window.store.createComponent({ name: 'FILTER_chaine_y', type: 'chaine', unitCost: 2, stock: 1, reorderThreshold: 10 });
+            window.store.createComponent({ name: 'FILTER_perle_z', type: 'perle', unitCost: 0.5, stock: 0, reorderThreshold: 5 });
+            window.ui._atelierQuery = '';
+            window.ui._atelierTypeFilter = 'all';
+            window.ui._atelierStockFilter = 'all';
+            window.router.navigate('atelier');
+            return { ok: true };
+        });
+        await page.waitForTimeout(300);
+        // Filtre par type perle
+        const filteredCount = await page.evaluate(() => {
+            window.ui._atelierTypeFilter = 'perle';
+            window.ui._refreshAtelierComponents();
+            // Le DOM contient le bouton "FILTER_chaine_y" ?
+            const html = document.getElementById('page-container').innerHTML;
+            return {
+                hasPerleX: html.includes('FILTER_perle_x'),
+                hasChaineY: html.includes('FILTER_chaine_y'),
+                hasPerleZ: html.includes('FILTER_perle_z')
+            };
+        });
+        // Cleanup
+        await page.evaluate(() => {
+            window.store.state.components = (window.store.state.components || []).filter(c => !c.name.startsWith('FILTER_'));
+            window.store.save();
+            window.ui._atelierQuery = '';
+            window.ui._atelierTypeFilter = 'all';
+            window.ui._atelierStockFilter = 'all';
+        });
+        expect(filteredCount.hasPerleX).toBe(true);
+        expect(filteredCount.hasChaineY).toBe(false);
+        expect(filteredCount.hasPerleZ).toBe(true);
+    });
 });
