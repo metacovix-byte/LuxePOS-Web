@@ -815,8 +815,10 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         const filteredCount = await page.evaluate(() => {
             window.ui._atelierTypeFilter = 'perle';
             window.ui._refreshAtelierComponents();
-            // Le DOM contient le bouton "FILTER_chaine_y" ?
-            const html = document.getElementById('page-container').innerHTML;
+            // On vérifie uniquement le tableau filtré (#atelier-components-content)
+            // PAS le block "Réassort recommandé" qui est intentionnellement global (cf renderAtelier).
+            const tbody = document.querySelector('#atelier-components-content tbody');
+            const html = tbody ? tbody.innerHTML : '';
             return {
                 hasPerleX: html.includes('FILTER_perle_x'),
                 hasChaineY: html.includes('FILTER_chaine_y'),
