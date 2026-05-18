@@ -5,6 +5,27 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.18] — 2026-05-18
+
+### Corrigé — Scanner code-barres dans la modal produit (Windows)
+- **Bug** : ouvrir la modal produit avec un produit existant déclenchait
+  `TypeError: this._isCapacitor is not a function` à `luxepos-final.html:27551`,
+  empêchant l'affichage du bouton scanner code-barres et bloquant le rendu de l'onglet.
+- **Cause** : la méthode `_isCapacitor()` n'est définie que sur la classe `Store`, mais
+  `_isScannerAvailable()` (classe UI) tentait `this._isCapacitor()` qui était undefined.
+- **Fix** : `window.store?._isCapacitor?.()` avec optional chaining → fallback gracieux
+  vers la détection `BarcodeDetector` (caméra web native Chromium / WebView2).
+- **Impact** : la modal produit fonctionne à nouveau sur Tauri Windows. Le bouton
+  scanner s'affiche si `BarcodeDetector` est disponible (Chromium ≥ 83, WebView2).
+
+### Tests
+- **Test 708 (filtres Atelier)** : faux-positif corrigé. Le bloc "Réassort recommandé"
+  liste globalement les composants en rupture (comportement intentionnel d'alerte
+  globale), ce qui faisait apparaître `chaine_y` même quand le filtre type='perle'
+  était actif. Le test cible désormais uniquement `#atelier-components-content tbody`
+  pour valider le filtrage du tableau principal sans interférence avec l'alerte.
+- 46/49 tests Playwright pass (2 legacy `/api/*` fails attendus, 1 skipped).
+
 ## [5.14.17] — 2026-05-18
 
 ### Ajouté — BOM (Bill of Materials) finalisée : composants ↔ bijoux finis

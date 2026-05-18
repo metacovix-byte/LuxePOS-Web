@@ -1,6 +1,29 @@
 # 📝 Sessions cumulées · 2026-05-07 → 2026-05-18
 
-## 🎯 État final 2026-05-18 : Pipeline complète + Marketing pro + Mobile + Analytics + BOM
+## 🎯 État final 2026-05-18 : Pipeline complète + Marketing pro + Mobile + Analytics + BOM + Hotfix scanner
+
+### 🆕 Livré 2026-05-18 (nuit) — v5.14.18 Hotfix scanner Windows
+
+**Bug remonté par Maëlle** : "l'ongle dans le programme window ne marche pas y a une erreur"
+— l'onglet (clic sur produit) crashait silencieusement après v5.14.17.
+
+- **Diagnostic** : `TypeError: this._isCapacitor is not a function` à
+  `luxepos-final.html:27551` dans `_isScannerAvailable()`. La méthode `_isCapacitor()`
+  vit sur la classe `Store`, pas sur la classe `UI` → l'appel `this._isCapacitor()`
+  retournait undefined et levait à l'exécution.
+- **Fix** (1 ligne) : `window.store?._isCapacitor?.()` avec optional chaining.
+- **Test 708** corrigé (faux-positif) : `chaine_y` apparaissait dans le HTML même quand
+  filter='perle' parce que le bloc d'alerte "Réassort recommandé" liste TOUS les
+  composants en rupture (intentionnel). Test recentré sur `#atelier-components-content
+  tbody` uniquement.
+- **CI release v5.14.18** : Windows + macOS + auto-updater build ✅, GitHub Pages ✅.
+- **Tests** : 46/49 pass (`/api/status` et `/api/save` sont legacy backend, attendus).
+
+**À tester côté Maëlle** : installer v5.14.18, ouvrir la modal d'édition produit,
+vérifier que tous les champs s'affichent correctement (Référence, Nom, Catégorie,
+Prix, Coût, Stock, Photo, Variantes, BOM…).
+
+---
 
 ### 🆕 Livré 2026-05-18 (soir) — v5.14.17 BOM finalisée
 

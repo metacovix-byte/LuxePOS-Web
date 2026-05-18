@@ -647,6 +647,33 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(result.hasExtractRef).toBe(true);
     });
 
+    test('608. REGRESSION v5.14.18 : _isScannerAvailable ne crash pas quand _isCapacitor absent', async ({ page }) => {
+        // Bug v5.14.17 : `this._isCapacitor()` était appelé dans la classe UI alors que
+        // la méthode vit sur Store. Résultat : TypeError au rendu de la modal produit.
+        // Fix : optional chaining `window.store?._isCapacitor?.()`.
+        const result = await page.evaluate(() => {
+            // Cas A : window.store inexistant temporairement
+            const savedStore = window.store;
+            window.store = undefined;
+            let threwA = false, retA;
+            try { retA = window.ui._isScannerAvailable(); } catch (_) { threwA = true; }
+            window.store = savedStore;
+
+            // Cas B : window.store sans _isCapacitor
+            const savedCap = window.store._isCapacitor;
+            delete window.store._isCapacitor;
+            let threwB = false, retB;
+            try { retB = window.ui._isScannerAvailable(); } catch (_) { threwB = true; }
+            window.store._isCapacitor = savedCap;
+
+            return { threwA, retA, threwB, retB };
+        });
+        expect(result.threwA).toBe(false);
+        expect(typeof result.retA).toBe('boolean');
+        expect(result.threwB).toBe(false);
+        expect(typeof result.retB).toBe('boolean');
+    });
+
     // ═══════════════════════════════════════════════════════════════
     // 7xx — BOM / Composants (v5.14.17)
     // ═══════════════════════════════════════════════════════════════
