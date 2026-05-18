@@ -1,3 +1,124 @@
+# 📝 Sessions cumulées · 2026-05-07 → 2026-05-18
+
+## 🎯 État final 2026-05-18 : Pipeline complète + Marketing pro + Mobile + Analytics
+
+### 🆕 Livré cette session (2026-05-18)
+
+**Performance & accessibilité site** (Agent design-critique) :
+- WCAG 2.1 AA compliant : skip-link traduit, `:focus-visible` global, graceful no-JS, touch targets 44×44
+- Rapport `website/DESIGN_AUDIT.md` complet
+- Animations GPU (`transform: scaleX()` au lieu de `width`)
+- Fonts allégées 10 → 6 weights, `font-display: optional`
+- Mesh gradient désactivé mobile
+
+**Android mobile** (Agent android-build) :
+- APK Capacitor 5.8 MB → 30 MB avec scanner code-barres ML Kit Google
+- Plugin `@capacitor-mlkit/barcode-scanning` installé
+- 3 méthodes JS exposées : `scanBarcode()`, `scanBarcodeToCart()`, `scanBarcodeToProductRef()`
+- 2 boutons "Scanner" dans le HTML (POS + form produit), affichés uniquement mobile
+- Permissions caméra dans AndroidManifest
+- Doc `ANDROID_BARCODE_SCANNER.md`
+- Tauri Windows reste intact (dynamic import jamais exécuté hors Capacitor)
+
+**Démos animées** (Agent demo-maker) :
+- `marketing/demo/sale-flow.html` (12s loop) — vente complète en 5 taps
+- `marketing/demo/inventory-import.html` (8s loop) — drag-drop Excel + scan
+- `marketing/demo/index.html` — page vitrine embed les 2 en iframe
+- Section "Voir l'app en action" intégrée dans `website/index.html`
+
+**Waitlist + lead capture** (Agent waitlist) :
+- `website/waitlist.html` — page dédiée avec form Formspree, glass-card, counter
+- `website/waitlist-success.html` — page de confirmation
+- Promesse : Lifetime early-bird 99 CHF (au lieu de 199) pour les 50 premières inscrites
+- Honeypot anti-spam + validation HTML5 + i18n 4 langues
+- Doc `marketing/WAITLIST_SETUP.md` (création compte Formspree)
+- Lien "Waitlist" ajouté dans la nav de toutes les pages
+
+**Analytics RGPD-safe** (Agent analytics) :
+- GoatCounter intégré sur les 5 pages (script async 4 KB)
+- Zéro cookie, zéro IP stockée, open source
+- `website/privacy.html` — page politique de confidentialité (4 langues)
+- Lien "Confidentialité" dans le footer de toutes les pages
+- Doc `marketing/ANALYTICS_SETUP.md`
+
+**Screencast outil** (Agent screencast) :
+- `marketing/demo/record.js` — script Node.js Puppeteer + ffmpeg
+- Convertit les démos HTML en MP4 + GIF, 4 variantes par démo (Insta carré, Insta story, README, Twitter)
+- Testé : `inventory-import` génère 8 fichiers en 17.8s
+- Doc `marketing/demo/RECORD_GUIDE.md`
+
+**Guide d'achat domaine** :
+- `marketing/DOMAIN_PURCHASE_GUIDE.md` — procédure complète `luxepos.ch` (Infomaniak) + `luxepos.app` (Cloudflare)
+- DNS records GitHub Pages, custom domain, email forwarding, sous-domaines
+
+### Récap structure finale du repo
+
+```
+LuxePOS-Web/
+├── luxepos-final.html             ← app source (Tailwind+Lucide inlinés)
+├── dist-web/                      ← bundle Tauri
+├── src-tauri/                     ← backend Rust + updater + crypto
+├── android/                       ← Capacitor + ML Kit barcode scanner
+├── website/                       ← site marketing 4 langues
+│   ├── index.html
+│   ├── pricing.html
+│   ├── waitlist.html
+│   ├── waitlist-success.html
+│   ├── privacy.html
+│   ├── i18n.js (4 langues × ~250 clés)
+│   ├── style.css + pricing.css
+│   ├── script.js
+│   ├── DESIGN_AUDIT.md
+│   └── DESIGN_SYSTEM.md
+├── marketing/
+│   ├── PRESS_KIT.md
+│   ├── LAUNCH_EMAILS.md
+│   ├── INSTA_POSTS.md (10 carrousels)
+│   ├── GITHUB_SPONSORS_SETUP.md
+│   ├── README_LUXEPOS.md
+│   ├── NEWSLETTER_TEMPLATE.md
+│   ├── WAITLIST_SETUP.md
+│   ├── ANALYTICS_SETUP.md
+│   ├── DOMAIN_PURCHASE_GUIDE.md
+│   └── demo/
+│       ├── sale-flow.html
+│       ├── inventory-import.html
+│       ├── index.html
+│       ├── record.js (Puppeteer + ffmpeg)
+│       ├── package.json
+│       ├── RECORD_GUIDE.md
+│       └── README.md
+├── tests/smoke.spec.js
+├── .github/workflows/
+│   ├── release.yml (Mac + Windows signés sur tag v*)
+│   ├── deploy-pages.yml
+│   └── build-mac.yml / build-windows.yml (manual)
+├── MONETIZATION_STRATEGY.md (40 KB stratégie commerciale)
+├── ANDROID_BARCODE_SCANNER.md
+├── DESIGN_SYSTEM.md
+├── ANDROID_BUILD.md / ANDROID_BUILD_RESULT.md
+├── DEPLOY_PAGES.md
+├── UPDATER_SETUP.md
+├── GITHUB_SECRETS_SETUP.md
+├── BUILD_PIPELINE_PLAN.md / UI_REFACTOR_PLAN.md / MOBILE_AND_MAC_PLAN.md
+├── README.md / CHANGELOG.md / SESSION_RECAP.md
+└── .github/workflows/ (CI complète)
+```
+
+### Actions utilisatrice restantes (TOUTES sont quick-wins)
+
+1. ⏳ **Activer GitHub Pages** : Settings → Pages → Source: GitHub Actions → Save (30 sec)
+2. ⏳ **Créer compte Formspree** : https://formspree.io/register, copier ID dans `website/waitlist.html` (5 min)
+3. ⏳ **Créer compte GoatCounter** : https://www.goatcounter.com/signup, sous-domaine `luxepos` (5 min)
+4. ⏳ **Activer GitHub Sponsors** : profil sponsors metacovix-byte (suivre `marketing/GITHUB_SPONSORS_SETUP.md`)
+5. ⏳ **Tester APK barcode scanner** sur ton tel Android
+6. ⏳ **Acheter domaine** `luxepos.ch` chez Infomaniak (15 CHF, 10 min)
+7. ⏳ **Session Claude Design** sur le site live une fois Pages activé
+
+---
+
+## 🎯 Sessions antérieures (référence)
+
 # 📝 Session du 2026-05-07 → site marketing complet livré
 
 ## 🎯 État actuel : v5.14.15 (app) + site marketing multilingue complet + pack monétisation
