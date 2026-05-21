@@ -1,13 +1,13 @@
 # 🗺️ LuxePOS — Roadmap stratégique
 
-> Vue d'ensemble du projet, livré et à venir. Mis à jour 2026-05-18.
+> Vue d'ensemble du projet, livré et à venir. Mis à jour 2026-05-18 (nuit, post v5.14.18).
 
 ---
 
 ## ✅ Livré (phase 1 → phase 2 partielle)
 
 ### Plateformes
-- ✅ **Windows natif** (Tauri 2.11 + WebView2) — v5.14.16, installeur signé, 3.3 MB
+- ✅ **Windows natif** (Tauri 2.11 + WebView2) — v5.14.18, installeur signé, 3.3 MB
 - ✅ **macOS universel** (Intel + Apple Silicon) — auto-build CI, signé
 - ✅ **Android APK** (Capacitor 8) — avec scanner code-barres ML Kit natif, ~30 MB
 - ⏳ **iOS** — bloqué (besoin compte Apple Developer 99 €/an + Mac)
@@ -69,14 +69,24 @@
 
 ---
 
+### BOM / Composants (v5.14.17)
+- ✅ Catalogue de composants (perles, chaînes, fermoirs)
+- ✅ Tracker stock + coût unitaire des composants
+- ✅ Linkage produits ↔ composants (BOM) avec recalc auto
+- ✅ Commandes fournisseur (AliExpress tracking + réception)
+- ✅ Filtres Atelier (type + stock + recherche) + alerte réassort
+- ✅ Wizard "Recalculer depuis BOM"
+- ✅ 8 tests Playwright (701–708)
+
+### Hotfix scanner (v5.14.18)
+- ✅ Fix `_isScannerAvailable` (modal produit ne crash plus sur Windows)
+- ✅ Test de régression 608
+- ✅ What's New modal multi-version (v5.14.18 par défaut, v4.8 archivée)
+
 ## 🚧 En cours (mai 2026)
 
-### v5.14.17 — BOM / Composants (agent en background)
-- 🚧 Catalogue de composants (perles, chaînes, fermoirs)
-- 🚧 Tracker stock + coût unitaire des composants
-- 🚧 Linkage produits ↔ composants (BOM)
-- 🚧 Auto-recalc cost quand composant change
-- 🚧 Commandes fournisseur (AliExpress tracking)
+Rien d'actif côté code — l'app v5.14.18 est en attente de feedback Maëlle.
+Prochaines pistes : Phase 0 (import Excel) ou multi-langue UI app.
 
 ---
 
