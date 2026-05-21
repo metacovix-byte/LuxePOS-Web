@@ -647,6 +647,50 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(result.hasExtractRef).toBe(true);
     });
 
+    test('609. What\'s New modal : multi-version + lecture APP_CONFIG.VERSION', async ({ page }) => {
+        // v5.14.18 — la modal What's New doit supporter plusieurs versions et lire
+        // dynamiquement APP_CONFIG.VERSION (au lieu de hardcoder '4.8').
+        const result = await page.evaluate(() => {
+            const appVer = window.APP_CONFIG?.VERSION;
+            const currentCatalog = window.ui._getWhatsNewFeatures(appVer);
+            const v48Catalog = window.ui._getWhatsNewFeatures('4.8');
+            const unknownCatalog = window.ui._getWhatsNewFeatures('99.0.0'); // fallback
+            return {
+                appVer,
+                currentHasFeatures: Array.isArray(currentCatalog?.features) && currentCatalog.features.length > 0,
+                currentHeadline: currentCatalog?.headline,
+                v48Has12: v48Catalog?.features?.length === 12,
+                fallbackUsed: unknownCatalog?.headline === currentCatalog?.headline
+            };
+        });
+        expect(result.appVer).toBe('5.14.18');
+        expect(result.currentHasFeatures).toBe(true);
+        expect(result.currentHeadline).toBeTruthy();
+        expect(result.v48Has12).toBe(true);
+        expect(result.fallbackUsed).toBe(true);
+    });
+
+    test('610. What\'s New modal : showWhatsNew(v4.8) ne marque pas la version courante comme vue', async ({ page }) => {
+        // v5.14.18 — un user qui clique sur "Voir nouveautés v4.8" depuis Paramètres
+        // ne doit pas écraser son flag whatsNewSeenVersion (sinon il rate la prochaine).
+        const result = await page.evaluate(async () => {
+            // Reset le flag
+            window.store.updateSettings({ whatsNewSeenVersion: '' });
+            // Ouvre la modal v4.8
+            window.ui.showWhatsNew('4.8');
+            // Récupère le bouton close et ferme
+            const btn = document.getElementById('whatsnew-close');
+            const wasOpen = !!btn;
+            if (btn) btn.click();
+            await new Promise(r => setTimeout(r, 50));
+            const flagAfter = window.store.state.settings.whatsNewSeenVersion;
+            return { wasOpen, flagAfter };
+        });
+        expect(result.wasOpen).toBe(true);
+        // Le flag reste vide → la prochaine modal "courante" s'affichera bien
+        expect(result.flagAfter).toBe('');
+    });
+
     test('608. REGRESSION v5.14.18 : _isScannerAvailable ne crash pas quand _isCapacitor absent', async ({ page }) => {
         // Bug v5.14.17 : `this._isCapacitor()` était appelé dans la classe UI alors que
         // la méthode vit sur Store. Résultat : TypeError au rendu de la modal produit.
