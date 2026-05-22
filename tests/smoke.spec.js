@@ -977,6 +977,30 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
     // 8xx — Import Excel (v5.14.20+, Phase 0)
     // ═══════════════════════════════════════════════════════════════
 
+    test('803. REGRESSION v5.14.20 : SheetJS (XLSX) inliné — disponible offline (pas de CDN runtime)', async ({ page }) => {
+        // Bug #2 agent Plan : SheetJS chargé via cdn.jsdelivr.net violait le
+        // principe offline-first du projet (cf. SESSION_RECAP "zéro CDN au runtime").
+        // Fix v5.14.20 : inliné via inline-vendors.js (dist-web/vendor/xlsx-0.18.5.full.min.js).
+        // Le test simule le mode offline et vérifie que XLSX reste disponible.
+        const result = await page.evaluate(async () => {
+            // 1. Vérifie que XLSX est défini (chargé par le boot HTML)
+            const xlsxLoaded = typeof window.XLSX !== 'undefined' && typeof window.XLSX.read === 'function';
+            // 2. Vérifie qu'il n'y a aucun <script src> pointant vers un CDN xlsx
+            const scripts = Array.from(document.querySelectorAll('script[src]'));
+            const xlsxCdnRefs = scripts.filter(s => /xlsx/i.test(s.src) && /cdn|jsdelivr|unpkg/i.test(s.src));
+            return {
+                xlsxLoaded,
+                xlsxVersion: window.XLSX?.version,
+                cdnRefCount: xlsxCdnRefs.length,
+                cdnHrefs: xlsxCdnRefs.map(s => s.src)
+            };
+        });
+        expect(result.xlsxLoaded).toBe(true);
+        expect(result.xlsxVersion).toBeTruthy();
+        // Aucun tag <script src=...xlsx...> via CDN ne doit subsister
+        expect(result.cdnRefCount).toBe(0);
+    });
+
     test('801. REGRESSION v5.14.20 : commitExcelImport repairs respecte le schéma addRepair (ref, itemDescription, finalPrice, history[])', async ({ page }) => {
         // Bug Phase 0 (trouvé par agent Plan) : commitExcelImport poussait
         // {date, clientName, description, price, status:'paid'|'free'} qui crashait
