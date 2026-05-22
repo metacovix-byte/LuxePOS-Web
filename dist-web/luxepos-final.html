@@ -263,7 +263,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
          ═══════════════════════════════════════════════════════════════════════ -->
     <script>
         const APP_CONFIG = Object.freeze({
-            VERSION: '5.14.17',
+            VERSION: '5.14.18',
 
             // ── Durées (en millisecondes)
             TIME: Object.freeze({
@@ -14255,10 +14255,15 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                                     style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
                                 <i data-lucide="play-circle" class="w-4 h-4 inline"></i> Rejouer le tutoriel
                             </button>
+                            <button onclick="window.ui.showWhatsNew()"
+                                    class="px-4 py-2 rounded-xl text-sm btn-press"
+                                    style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                                <i data-lucide="gift" class="w-4 h-4 inline"></i> Voir les nouveautés v${window.APP_CONFIG?.VERSION || '5.14.18'}
+                            </button>
                             <button onclick="window.ui.showWhatsNew('4.8')"
                                     class="px-4 py-2 rounded-xl text-sm btn-press"
                                     style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
-                                <i data-lucide="gift" class="w-4 h-4 inline"></i> Voir les nouveautés v4.8
+                                <i data-lucide="history" class="w-4 h-4 inline"></i> Nouveautés v4.8
                             </button>
                         </div>
                     </div>
@@ -19808,45 +19813,83 @@ service cloud.firestore {
         }
 
         // ═════════════════════════════════════════════════════════════════════
-        // v4.8 — WHAT'S NEW modal (affiché à la 1ère visite sur v4.8)
+        // v4.8 → v5.14 — WHAT'S NEW modal (multi-version, déclenchée sur APP_CONFIG.VERSION)
+        // v5.14.18 : refactor pour supporter plusieurs versions, déclenchement sur version courante
         // ═════════════════════════════════════════════════════════════════════
+        _getWhatsNewFeatures(version) {
+            // Catalogue par version. Affiché de gauche à droite, haut en bas.
+            const catalog = {
+                '5.14.18': {
+                    headline: 'Photos, scanner code-barres & BOM artisanale',
+                    sub: 'Le pack v5.14 — capture rapide, recalcul auto des coûts, et un fix scanner.',
+                    features: [
+                        { icon: 'camera', title: 'Capture webcam produit', desc: 'Bouton 📸 Caméra dans la modal produit, multi-caméras, compression auto' },
+                        { icon: 'folder-input', title: 'Import en masse photos', desc: 'Glissez un dossier → matching auto par référence' },
+                        { icon: 'clipboard-paste', title: 'Coller depuis presse-papier', desc: '<kbd>Ctrl+V</kbd> sur le champ photo' },
+                        { icon: 'scan-line', title: 'Scanner code-barres Tauri', desc: 'Webcam Windows/Mac via BarcodeDetector natif (parité Android ML Kit)' },
+                        { icon: 'package', title: 'Composants & BOM', desc: 'Catalogue de perles, chaînes, fermoirs avec coût + stock' },
+                        { icon: 'link', title: 'Lien bijou ↔ composants', desc: 'Bouton "+ Composition" dans la modal produit' },
+                        { icon: 'calculator', title: 'Coût recalculé auto', desc: 'Change le prix d\'une perle → tous les bijoux liés se mettent à jour' },
+                        { icon: 'truck', title: 'Commandes fournisseur', desc: 'Suivi AliExpress (tracking + date estimée + réception)' },
+                        { icon: 'alert-triangle', title: 'Réassort intelligent', desc: 'Alerte composants sous seuil, pas alertes fantômes sur pièces uniques' },
+                        { icon: 'wand-2', title: 'Wizard "depuis BOM"', desc: 'Recalcule les coûts de tous les bijoux composés en 1 clic' },
+                        { icon: 'bug', title: 'Fix scanner Windows', desc: 'L\'ouverture modal produit ne crash plus (TypeError corrigé)' },
+                        { icon: 'shield-check', title: 'Test de régression', desc: '47/49 Playwright pass, nouveau test 608 protège le fix' }
+                    ]
+                },
+                '4.8': {
+                    headline: 'Un gros coup de polish visuel et de productivité',
+                    sub: 'Thèmes, animations, raccourcis : la base UX moderne de LuxePOS.',
+                    features: [
+                        { icon: 'palette', title: '6 thèmes couleurs', desc: 'Émeraude, Or rose, Or champagne, Onyx, Saphir, Rubis' },
+                        { icon: 'type', title: 'Police "display"', desc: 'Playfair Display pour vos titres (optionnelle)' },
+                        { icon: 'sparkles', title: 'Mesh gradient + glassmorphism+', desc: 'Fond animé et effet verre premium' },
+                        { icon: 'trending-up', title: 'Sparklines KPIs', desc: 'Mini-courbes dans chaque carte du dashboard' },
+                        { icon: 'star', title: 'Produits favoris', desc: 'Marquez d\'une ⭐ et retrouvez-les en tête' },
+                        { icon: 'mouse-pointer-2', title: 'Édition inline', desc: 'Double-cliquez prix/stock dans l\'inventaire' },
+                        { icon: 'check-square', title: 'Sélection multiple', desc: 'Cochez plusieurs produits, appliquez une action groupée' },
+                        { icon: 'rotate-ccw', title: 'Undo / Redo global', desc: '<kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd> partout' },
+                        { icon: 'grid-3x3', title: 'Heatmap ventes', desc: 'Identifiez vos créneaux forts en un coup d\'œil' },
+                        { icon: 'target', title: 'Jauge objectif CA', desc: 'Progression vers votre cible mensuelle' },
+                        { icon: 'award', title: 'Badges fidélité clients', desc: 'Bronze → Argent → Or → Platine → Diamant' },
+                        { icon: 'accessibility', title: 'Mode haute lisibilité', desc: 'Texte +20%, contraste renforcé' }
+                    ]
+                }
+            };
+            return catalog[version] || catalog['5.14.18'];
+        }
         maybeShowWhatsNew() {
             const s = window.store?.state?.settings;
             if (!s) return;
-            const CURRENT_VERSION = '4.8';
+            // v5.14.18 : on déclenche sur APP_CONFIG.VERSION (lit la version réelle de l'app)
+            const CURRENT_VERSION = (window.APP_CONFIG?.VERSION) || '5.14.18';
             if (s.whatsNewSeenVersion === CURRENT_VERSION) return;
             if (!s.onboardingDone) return; // n'écrase pas l'onboarding
             this.showWhatsNew(CURRENT_VERSION);
         }
-        showWhatsNew(version = '4.8') {
-            const features = [
-                { icon: 'palette', title: '6 thèmes couleurs', desc: 'Émeraude, Or rose, Or champagne, Onyx, Saphir, Rubis' },
-                { icon: 'type', title: 'Police "display"', desc: 'Playfair Display pour vos titres (optionnelle)' },
-                { icon: 'sparkles', title: 'Mesh gradient + glassmorphism+', desc: 'Fond animé et effet verre premium' },
-                { icon: 'trending-up', title: 'Sparklines KPIs', desc: 'Mini-courbes dans chaque carte du dashboard' },
-                { icon: 'star', title: 'Produits favoris', desc: 'Marquez d\'une ⭐ et retrouvez-les en tête' },
-                { icon: 'mouse-pointer-2', title: 'Édition inline', desc: 'Double-cliquez prix/stock dans l\'inventaire' },
-                { icon: 'check-square', title: 'Sélection multiple', desc: 'Cochez plusieurs produits, appliquez une action groupée' },
-                { icon: 'rotate-ccw', title: 'Undo / Redo global', desc: '<kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd> partout' },
-                { icon: 'grid-3x3', title: 'Heatmap ventes', desc: 'Identifiez vos créneaux forts en un coup d\'œil' },
-                { icon: 'target', title: 'Jauge objectif CA', desc: 'Progression vers votre cible mensuelle' },
-                { icon: 'award', title: 'Badges fidélité clients', desc: 'Bronze → Argent → Or → Platine → Diamant' },
-                { icon: 'accessibility', title: 'Mode haute lisibilité', desc: 'Texte +20%, contraste renforcé' }
-            ];
+        showWhatsNew(version) {
+            // v5.14.18 : si pas de version passée, on affiche la version courante
+            if (!version) version = (window.APP_CONFIG?.VERSION) || '5.14.18';
+            const { headline, sub, features } = this._getWhatsNewFeatures(version);
             const overlay = document.createElement('div');
             overlay.id = 'whatsnew-overlay';
             overlay.className = 'fixed inset-0 z-[999997] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm';
             overlay.onclick = (e) => { if (e.target === overlay) closeIt(); };
             const closeIt = () => {
                 overlay.remove();
-                window.store.updateSettings({ whatsNewSeenVersion: version });
+                // On marque comme vue uniquement si c'est la version courante
+                // (un user qui re-clique sur "Voir les nouveautés v4.8" ne reset pas son flag)
+                const CURRENT_VERSION = (window.APP_CONFIG?.VERSION) || '5.14.18';
+                if (version === CURRENT_VERSION) {
+                    window.store.updateSettings({ whatsNewSeenVersion: version });
+                }
             };
             overlay.innerHTML = `
                 <div class="glass-panel anim-spring-in rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden" style="background: var(--bg-primary); max-height: 88vh; display: flex; flex-direction: column;" onclick="event.stopPropagation()">
                     <div class="p-6 border-b" style="border-color: var(--border-color); background: linear-gradient(135deg, var(--brand-main), var(--brand-dark)); color: white;">
                         <div style="font-size: 11px; letter-spacing: 0.15em; opacity: 0.85; text-transform: uppercase;">Nouvelle version ${version}</div>
-                        <h3 class="font-display" style="font-size: 28px; font-weight: 700; margin-top: 4px;">Quoi de neuf ? ✨</h3>
-                        <div style="opacity: 0.9; font-size: 13px; margin-top: 4px;">Un gros coup de polish visuel et de productivité</div>
+                        <h3 class="font-display" style="font-size: 28px; font-weight: 700; margin-top: 4px;">${headline} ✨</h3>
+                        <div style="opacity: 0.9; font-size: 13px; margin-top: 4px;">${sub}</div>
                     </div>
                     <div class="p-6 overflow-y-auto" style="max-height: 60vh;">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
