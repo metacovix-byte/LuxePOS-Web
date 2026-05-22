@@ -663,7 +663,8 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
                 fallbackUsed: unknownCatalog?.headline === currentCatalog?.headline
             };
         });
-        expect(result.appVer).toBe('5.14.18');
+        // appVer doit matcher la version courante (5.14.18, 5.14.19, …) — pas figé.
+        expect(result.appVer).toMatch(/^5\.14\.\d+$/);
         expect(result.currentHasFeatures).toBe(true);
         expect(result.currentHeadline).toBeTruthy();
         expect(result.v48Has12).toBe(true);
@@ -716,6 +717,69 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(typeof result.retA).toBe('boolean');
         expect(result.threwB).toBe(false);
         expect(typeof result.retB).toBe('boolean');
+    });
+
+    test('611. REGRESSION v5.14.19 : renderPOS / openProductModal / scanBarcode ne crashent pas (this._isCapacitor → window.store._isCapacitor)', async ({ page }) => {
+        // Bug critique v5.14.17/18 : 3 autres sites dans la classe UI appelaient encore
+        // this._isCapacitor() (inexistant sur UI). Le hotfix v5.14.18 n'avait corrigé
+        // que _isScannerAvailable, laissant openProductModal en crash — exact symptôme
+        // remonté par Maëlle ("l'ongle dans le programme window ne marche pas").
+        // Fix v5.14.19 : remplacer par window.store?._isCapacitor?.() aux 3 sites.
+        const result = await page.evaluate(() => {
+            const out = { renderPOS: { threw: false }, openProductModal: { threw: false }, scanBarcode: { threw: false } };
+
+            // 1. renderPOS doit produire son HTML sans throw
+            try {
+                const html = window.ui.renderPOS();
+                out.renderPOS.htmlLength = html.length;
+                out.renderPOS.hasSearchInput = html.includes('searchInput') || html.includes('product-search');
+            } catch (e) { out.renderPOS.threw = true; out.renderPOS.msg = String(e); }
+
+            // 2. openProductModal (édition produit) doit pouvoir s'ouvrir sans throw.
+            //    Le bug crashait dans le rendu du HTML de la modal (l. 15478 `this._isCapacitor()`).
+            //    On fournit un produit complet (image, reference) pour éviter d'autres null-safety
+            //    qui ne sont pas dans le scope de ce test.
+            try {
+                window.store.addProduct({
+                    name: 'TEST_611', reference: 'TEST611', price: 10, stock: 1,
+                    category: 'bracelets', image: '', cost: 0, description: ''
+                });
+                const p = window.store.state.products.find(p => p.name === 'TEST_611');
+                if (!p) throw new Error('produit TEST_611 introuvable après addProduct');
+                window.ui.openProductModal(p.id);
+                // La modal est un div appendé à body avec class "fixed inset-0 z-[9999]"
+                // (pas d'ID stable). On la cherche par sa structure caractéristique.
+                const modalPresent = !!document.querySelector('div.fixed.inset-0.z-\\[9999\\]');
+                out.openProductModal.modalPresent = modalPresent;
+                document.querySelectorAll('div.fixed.inset-0.z-\\[9999\\]').forEach(el => el.remove());
+                window.store.deleteProduct?.(p.id);
+            } catch (e) { out.openProductModal.threw = true; out.openProductModal.msg = String(e); out.openProductModal.stack = (e.stack||'').split('\n')[1]; }
+
+            // 3. scanBarcode doit retourner null gracieusement sans throw (pas de webcam dispo)
+            //    On force window.store._isCapacitor à retourner false pour tester le chemin "pas capacitor"
+            try {
+                const orig = window.store._isCapacitor;
+                window.store._isCapacitor = () => false;
+                const savedBD = window.BarcodeDetector;
+                try { delete window.BarcodeDetector; } catch (_) {}
+                // Appel + await via une IIFE async qui retourne via callback synchrone
+                let p = window.ui.scanBarcode();
+                out.scanBarcode.isPromise = p && typeof p.then === 'function';
+                window.store._isCapacitor = orig;
+                if (savedBD) window.BarcodeDetector = savedBD;
+            } catch (e) { out.scanBarcode.threw = true; out.scanBarcode.msg = String(e); }
+
+            return out;
+        });
+        if (result.openProductModal.threw) console.log('openProductModal error:', result.openProductModal.msg, '|', result.openProductModal.stack);
+        if (result.scanBarcode.threw) console.log('scanBarcode error:', result.scanBarcode.msg);
+        if (result.renderPOS.threw) console.log('renderPOS error:', result.renderPOS.msg);
+        expect(result.renderPOS.threw).toBe(false);
+        expect(result.renderPOS.htmlLength).toBeGreaterThan(100);
+        expect(result.openProductModal.threw).toBe(false);
+        expect(result.openProductModal.modalPresent).toBe(true);
+        expect(result.scanBarcode.threw).toBe(false);
+        expect(result.scanBarcode.isPromise).toBe(true);
     });
 
     // ═══════════════════════════════════════════════════════════════

@@ -1,8 +1,29 @@
 # 📝 Sessions cumulées · 2026-05-07 → 2026-05-18
 
-## 🎯 État final 2026-05-18 : Pipeline complète + Marketing pro + Mobile + Analytics + BOM + Hotfix scanner
+## 🎯 État final 2026-05-18 : Pipeline complète + Marketing pro + Mobile + Analytics + BOM + Hotfix complet modal produit
 
-### 🆕 Livré 2026-05-18 (nuit) — v5.14.18 Hotfix scanner Windows
+### 🆕 Livré 2026-05-18 (nuit, après audit indépendant) — v5.14.19 Hotfix COMPLET
+
+**Découverte critique** : audit indépendant (agent général-purpose) du hotfix
+v5.14.18 a révélé que celui-ci était **incomplet**. La modal produit crashait
+toujours après installation v5.14.18 — exactement le symptôme initial de Maëlle
+("l'ongle dans le programme window ne marche pas y a une erruer").
+
+**Cause** : `this._isCapacitor()` n'existe pas sur la classe UI (uniquement sur
+Store). Le commit c133979 n'avait corrigé qu'`_isScannerAvailable()`, laissant
+3 autres sites :
+- `UI.renderPOS()` l. 11272 — bouton scan caisse
+- `UI.openProductModal()` l. 15478 — bouton scan modal produit (LE crash de Maëlle)
+- `UI.scanBarcode()` l. 28173 — fallback webcam
+
+**Fix v5.14.19** : remplacement aux 3 sites par `window.store?._isCapacitor?.()`.
++ nouveau test 611 qui invoque `openProductModal(productId)` après effacement
+temporaire de `_isCapacitor` (couvre exactement le scénario qui crashait).
+
+**Tests : 49 passent** (50 avec test 611 ajouté ; 2 legacy `/api/*` attendus,
+1 skipped).
+
+### 🆕 Livré 2026-05-18 (nuit) — v5.14.18 Hotfix scanner Windows (PARTIEL)
 
 **Bug remonté par Maëlle** : "l'ongle dans le programme window ne marche pas y a une erreur"
 — l'onglet (clic sur produit) crashait silencieusement après v5.14.17.

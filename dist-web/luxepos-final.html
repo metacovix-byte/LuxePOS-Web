@@ -263,7 +263,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
          ═══════════════════════════════════════════════════════════════════════ -->
     <script>
         const APP_CONFIG = Object.freeze({
-            VERSION: '5.14.18',
+            VERSION: '5.14.19',
 
             // ── Durées (en millisecondes)
             TIME: Object.freeze({
@@ -11269,7 +11269,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                                     aria-label="Rechercher un produit"
                                     autofocus>
                             </div>
-                            ${(this._isCapacitor() || this._isScannerAvailable?.()) ? `
+                            ${(window.store?._isCapacitor?.() || this._isScannerAvailable?.()) ? `
                                 <button onclick="window.ui.scanBarcodeToCart()"
                                         class="btn-2026 flex-shrink-0 flex items-center gap-2 px-4 py-4 rounded-xl shadow-lg text-white-force"
                                         style="background: linear-gradient(135deg, var(--brand-main), var(--brand-dark));"
@@ -14258,7 +14258,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                             <button onclick="window.ui.showWhatsNew()"
                                     class="px-4 py-2 rounded-xl text-sm btn-press"
                                     style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
-                                <i data-lucide="gift" class="w-4 h-4 inline"></i> Voir les nouveautés v${window.APP_CONFIG?.VERSION || '5.14.18'}
+                                <i data-lucide="gift" class="w-4 h-4 inline"></i> Voir les nouveautés v${window.APP_CONFIG?.VERSION || '5.14.19'}
                             </button>
                             <button onclick="window.ui.showWhatsNew('4.8')"
                                     class="px-4 py-2 rounded-xl text-sm btn-press"
@@ -15475,7 +15475,7 @@ service cloud.firestore {
                                         value="${isEdit ? (product.reference || '') : ''}"
                                         class="glass-input flex-1 p-3 rounded-lg font-mono"
                                         oninput="this.value = this.value.toUpperCase()">
-                                    ${(this._isCapacitor() || this._isScannerAvailable?.()) ? `
+                                    ${(window.store?._isCapacitor?.() || this._isScannerAvailable?.()) ? `
                                         <button type="button"
                                                 onclick="window.ui.scanBarcodeToProductRef()"
                                                 class="btn-2026 secondary"
@@ -19819,9 +19819,9 @@ service cloud.firestore {
         _getWhatsNewFeatures(version) {
             // Catalogue par version. Affiché de gauche à droite, haut en bas.
             const catalog = {
-                '5.14.18': {
+                '5.14.19': {
                     headline: 'Photos, scanner code-barres & BOM artisanale',
-                    sub: 'Le pack v5.14 — capture rapide, recalcul auto des coûts, et un fix scanner.',
+                    sub: 'Le pack v5.14 complet — capture rapide, recalcul auto des coûts, et fix scanner finalisé.',
                     features: [
                         { icon: 'camera', title: 'Capture webcam produit', desc: 'Bouton 📸 Caméra dans la modal produit, multi-caméras, compression auto' },
                         { icon: 'folder-input', title: 'Import en masse photos', desc: 'Glissez un dossier → matching auto par référence' },
@@ -19833,8 +19833,8 @@ service cloud.firestore {
                         { icon: 'truck', title: 'Commandes fournisseur', desc: 'Suivi AliExpress (tracking + date estimée + réception)' },
                         { icon: 'alert-triangle', title: 'Réassort intelligent', desc: 'Alerte composants sous seuil, pas alertes fantômes sur pièces uniques' },
                         { icon: 'wand-2', title: 'Wizard "depuis BOM"', desc: 'Recalcule les coûts de tous les bijoux composés en 1 clic' },
-                        { icon: 'bug', title: 'Fix scanner Windows', desc: 'L\'ouverture modal produit ne crash plus (TypeError corrigé)' },
-                        { icon: 'shield-check', title: 'Test de régression', desc: '47/49 Playwright pass, nouveau test 608 protège le fix' }
+                        { icon: 'bug', title: 'Fix complet modal produit', desc: 'v5.14.19 corrige 4 sites _isCapacitor sur la classe UI (la v5.14.18 n\'en avait fixé qu\'un)' },
+                        { icon: 'shield-check', title: 'Tests de régression', desc: '49+ Playwright pass, tests 608+611 protègent les fix' }
                     ]
                 },
                 '4.8': {
@@ -19856,20 +19856,20 @@ service cloud.firestore {
                     ]
                 }
             };
-            return catalog[version] || catalog['5.14.18'];
+            return catalog[version] || catalog['5.14.19'];
         }
         maybeShowWhatsNew() {
             const s = window.store?.state?.settings;
             if (!s) return;
             // v5.14.18 : on déclenche sur APP_CONFIG.VERSION (lit la version réelle de l'app)
-            const CURRENT_VERSION = (window.APP_CONFIG?.VERSION) || '5.14.18';
+            const CURRENT_VERSION = (window.APP_CONFIG?.VERSION) || '5.14.19';
             if (s.whatsNewSeenVersion === CURRENT_VERSION) return;
             if (!s.onboardingDone) return; // n'écrase pas l'onboarding
             this.showWhatsNew(CURRENT_VERSION);
         }
         showWhatsNew(version) {
             // v5.14.18 : si pas de version passée, on affiche la version courante
-            if (!version) version = (window.APP_CONFIG?.VERSION) || '5.14.18';
+            if (!version) version = (window.APP_CONFIG?.VERSION) || '5.14.19';
             const { headline, sub, features } = this._getWhatsNewFeatures(version);
             const overlay = document.createElement('div');
             overlay.id = 'whatsnew-overlay';
@@ -19879,7 +19879,7 @@ service cloud.firestore {
                 overlay.remove();
                 // On marque comme vue uniquement si c'est la version courante
                 // (un user qui re-clique sur "Voir les nouveautés v4.8" ne reset pas son flag)
-                const CURRENT_VERSION = (window.APP_CONFIG?.VERSION) || '5.14.18';
+                const CURRENT_VERSION = (window.APP_CONFIG?.VERSION) || '5.14.19';
                 if (version === CURRENT_VERSION) {
                     window.store.updateSettings({ whatsNewSeenVersion: version });
                 }
@@ -28170,7 +28170,8 @@ td{padding:12px;border-bottom:1px solid #eee}
          */
         async scanBarcode() {
             // v5.14.16 — Sur Tauri/desktop ou browser avec BarcodeDetector → utilise la webcam
-            if (!this._isCapacitor()) {
+            // v5.14.19 — _isCapacitor() vit sur Store, pas UI → on délègue via window.store
+            if (!window.store?._isCapacitor?.()) {
                 if (typeof window.BarcodeDetector !== 'undefined') {
                     return await this.scanBarcodeWebcam();
                 }

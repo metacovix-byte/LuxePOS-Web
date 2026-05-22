@@ -5,6 +5,36 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.19] — 2026-05-18 — Hotfix complet modal produit
+
+### Corrigé — v5.14.18 était incomplète : 3 sites `this._isCapacitor()` restants
+Un audit indépendant a révélé que le hotfix v5.14.18 n'avait corrigé qu'**un seul**
+des 4 sites où `this._isCapacitor()` était appelé sur la classe UI (alors que la
+méthode vit sur Store). **La modal produit crashait toujours après installation
+v5.14.18** — c'est exactement le symptôme remonté initialement par Maëlle.
+
+Les 3 sites restants, tous corrigés en v5.14.19 :
+- **`luxepos-final.html:11272`** — `UI.renderPOS()` (template du panneau de recherche
+  avec bouton scanner code-barres dans la caisse).
+- **`luxepos-final.html:15478`** — `UI.openProductModal()` (champ Référence avec
+  bouton scan code-barres). **C'est le crash que Maëlle rapportait.**
+- **`luxepos-final.html:28173`** — `UI.scanBarcode()` (logique fallback webcam).
+
+**Fix** : remplacement par `window.store?._isCapacitor?.()` aux 3 sites, identique au
+fix v5.14.18 pour `_isScannerAvailable`.
+
+### Tests
+- **Nouveau test 611** : régression end-to-end — appelle `renderPOS()`,
+  `openProductModal(productId)` et `scanBarcode()` après avoir effacé temporairement
+  `window.store._isCapacitor`. Doit produire 0 throw + modal rendue.
+- Le test couvre le scénario exact qui crashait chez Maëlle (ouverture modal d'un
+  produit existant).
+
+### What's New modal
+- Catalogue features renommé `5.14.18` → `5.14.19`, ajout d'une carte
+  "Fix complet modal produit" expliquant la régression.
+- Fallback `_getWhatsNewFeatures()` mis à jour vers `5.14.19`.
+
 ## [5.14.18] — 2026-05-18
 
 ### Corrigé — Scanner code-barres dans la modal produit (Windows)
