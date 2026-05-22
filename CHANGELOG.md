@@ -5,6 +5,41 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.20] — 2026-05-18 — Fix schéma repairs import Excel (P0)
+
+### Corrigé — `commitExcelImport` produisait des SAV avec un schéma incompatible
+Un agent Plan d'audit a découvert que la branche "réparations" du commit Excel
+poussait directement dans `state.repairs` un objet minimal qui n'avait **aucun
+champ requis par la page Réparations** :
+
+| Avant (incompatible) | Après (aligné addRepair) |
+|---|---|
+| `description` | `itemDescription` + `issue` |
+| `price` | `estimatedPrice` + `finalPrice` (selon status) |
+| `status: 'paid'\|'free'` | `status: 'received'\|'delivered'` |
+| absent | `ref` (`SAV-IMP-001`, `SAV-IMP-002`, …) |
+| absent | `itemType`, `priority`, `history[]`, `deposit` |
+| absent | `createdAt`, `updatedAt` |
+
+**Conséquence avant fix** : page Réparations crash silencieusement sur
+`repair.itemDescription` undefined ; filtres status (`'ready'`, etc.) excluent
+tous les SAV importés ; aucune référence affichée.
+
+**Mapping status** :
+- Excel `status: 'paid'` (prix > 0, donc le client a payé) → SAV `status: 'delivered'`, finalPrice = prix.
+- Excel `status: 'free'` (pas de prix, gratuit ou pas encore payé) → SAV `status: 'received'`, finalPrice = 0.
+
+**Historique automatique** : chaque SAV importé reçoit 1 entrée `'received'`
+(création) + éventuellement 1 entrée `'delivered'` si payé.
+
+### Tests
+- **801** : commitExcelImport avec 2 SAV (1 payé + 1 gratuit) → schéma complet
+  vérifié champ par champ + mapping status correct.
+- **802** : page Réparations rend sans crash après import + le SAV importé
+  apparaît dans le DOM (nom client / description / ref `SAV-IMP-001`).
+
+52 tests Playwright pass (était 50/52, +2 nouveaux 801+802).
+
 ## [5.14.19] — 2026-05-18 — Hotfix complet modal produit
 
 ### Corrigé — v5.14.18 était incomplète : 3 sites `this._isCapacitor()` restants

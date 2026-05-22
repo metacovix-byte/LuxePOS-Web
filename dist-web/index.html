@@ -263,7 +263,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
          ═══════════════════════════════════════════════════════════════════════ -->
     <script>
         const APP_CONFIG = Object.freeze({
-            VERSION: '5.14.19',
+            VERSION: '5.14.20',
 
             // ── Durées (en millisecondes)
             TIME: Object.freeze({
@@ -7906,18 +7906,43 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
                 }
             }
 
-            // 4) Réparations
+            // 4) Réparations — v5.14.20 : aligne avec le schéma addRepair() pour que la
+            //    page Réparations puisse les afficher (sinon crash sur repair.itemDescription
+            //    ou filter sur status === 'ready'/'received'/...).
             if (opts.importRepairs) {
+                let repairCounter = 0;
                 for (const sh of parsed.sheets) {
                     if (sh.type !== 'repairs') continue;
                     for (const rp of (sh.repairs || [])) {
+                        repairCounter++;
+                        const isPaid = rp.status === 'paid';
+                        const isoDate = rp.date || new Date().toISOString();
                         this.state.repairs.push({
-                            id: generateId(),
-                            date: rp.date,
-                            clientName: rp.clientName,
-                            description: rp.description,
-                            price: rp.price,
-                            status: rp.status,
+                            id: 'rep_' + generateId(),
+                            // Préfixe SAV-IMP pour distinguer les SAV importés vs ceux créés à la main
+                            ref: 'SAV-IMP-' + String(repairCounter).padStart(3, '0'),
+                            clientId: null,
+                            clientName: rp.clientName || '',
+                            itemDescription: rp.description || '(non renseigné)',
+                            itemType: 'Bijou',  // Inconnu côté Excel — fallback générique
+                            issue: rp.description || 'Importé depuis Excel',
+                            estimatedPrice: rp.price || 0,
+                            finalPrice: isPaid ? (rp.price || 0) : 0,
+                            deposit: 0,
+                            // Mapping status Excel → status SAV interne :
+                            //   'paid' (a payé) → 'delivered' (livré, terminé)
+                            //   'free' (rien à payer / pas de prix) → 'received' (à traiter)
+                            status: isPaid ? 'delivered' : 'received',
+                            priority: 'normal',
+                            estimatedDate: null,
+                            internalNotes: 'Importé depuis Excel le ' + new Date().toLocaleDateString('fr-CH'),
+                            history: [
+                                { at: isoDate, status: 'received', note: 'Ticket créé (import Excel)' },
+                                ...(isPaid ? [{ at: isoDate, status: 'delivered', note: 'Marqué comme livré/payé (import Excel)' }] : [])
+                            ],
+                            photos: [],
+                            createdAt: isoDate,
+                            updatedAt: new Date().toISOString(),
                             source: 'excel-import'
                         });
                         report.repairsAdded++;

@@ -972,4 +972,106 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(filteredCount.hasChaineY).toBe(false);
         expect(filteredCount.hasPerleZ).toBe(true);
     });
+
+    // ═══════════════════════════════════════════════════════════════
+    // 8xx — Import Excel (v5.14.20+, Phase 0)
+    // ═══════════════════════════════════════════════════════════════
+
+    test('801. REGRESSION v5.14.20 : commitExcelImport repairs respecte le schéma addRepair (ref, itemDescription, finalPrice, history[])', async ({ page }) => {
+        // Bug Phase 0 (trouvé par agent Plan) : commitExcelImport poussait
+        // {date, clientName, description, price, status:'paid'|'free'} qui crashait
+        // la page Réparations (qui attend itemDescription, status:'received'|...).
+        // Fix v5.14.20 : aligne le push avec le schéma complet de addRepair().
+        const result = await page.evaluate(() => {
+            // Simule un parsed avec 2 réparations
+            const parsed = {
+                sheets: [{
+                    name: 'Réparations TEST', type: 'repairs',
+                    repairs: [
+                        { _importKey: 'r0', date: '2026-01-15T00:00:00Z', clientName: 'Alice', description: 'Soudure fermoir collier', price: 30, status: 'paid' },
+                        { _importKey: 'r1', date: '2026-02-10T00:00:00Z', clientName: 'Bob', description: 'Nettoyage bague', price: 0, status: 'free' }
+                    ]
+                }],
+                summary: { totalProducts: 0, totalSales: 0, totalBundles: 0, totalRepairs: 2 }
+            };
+            const beforeCount = (window.store.state.repairs || []).length;
+            window.store.commitExcelImport(parsed, { wipe: false, importHistory: false, importBundles: false, importRepairs: true });
+            const afterCount = (window.store.state.repairs || []).length;
+            // Récupère les 2 dernières réparations ajoutées
+            const added = window.store.state.repairs.slice(0, 2);  // unshift en tête, ou push en queue ? on cherche les "excel-import"
+            const importedRepairs = window.store.state.repairs.filter(r => r.source === 'excel-import');
+            return {
+                added: afterCount - beforeCount,
+                count: importedRepairs.length,
+                first: importedRepairs[0] ? {
+                    hasRef: typeof importedRepairs[0].ref === 'string' && importedRepairs[0].ref.length > 0,
+                    refStartsWithSAV: (importedRepairs[0].ref || '').startsWith('SAV-IMP-'),
+                    hasItemDescription: typeof importedRepairs[0].itemDescription === 'string',
+                    hasItemType: typeof importedRepairs[0].itemType === 'string',
+                    statusInValid: ['received', 'in_progress', 'ready', 'delivered', 'cancelled'].includes(importedRepairs[0].status),
+                    hasHistoryArray: Array.isArray(importedRepairs[0].history) && importedRepairs[0].history.length > 0,
+                    hasCreatedAt: typeof importedRepairs[0].createdAt === 'string',
+                    hasUpdatedAt: typeof importedRepairs[0].updatedAt === 'string',
+                } : null,
+                // Vérifie le mapping status paid → delivered, free → received
+                paidIsDelivered: !!importedRepairs.find(r => r.clientName === 'Alice' && r.status === 'delivered' && r.finalPrice === 30),
+                freeIsReceived: !!importedRepairs.find(r => r.clientName === 'Bob' && r.status === 'received' && r.finalPrice === 0),
+            };
+        });
+
+        // Cleanup
+        await page.evaluate(() => {
+            window.store.state.repairs = (window.store.state.repairs || []).filter(r => r.source !== 'excel-import');
+            window.store.save();
+        });
+
+        expect(result.added).toBe(2);
+        expect(result.count).toBe(2);
+        expect(result.first.hasRef).toBe(true);
+        expect(result.first.refStartsWithSAV).toBe(true);
+        expect(result.first.hasItemDescription).toBe(true);
+        expect(result.first.hasItemType).toBe(true);
+        expect(result.first.statusInValid).toBe(true);
+        expect(result.first.hasHistoryArray).toBe(true);
+        expect(result.first.hasCreatedAt).toBe(true);
+        expect(result.first.hasUpdatedAt).toBe(true);
+        expect(result.paidIsDelivered).toBe(true);
+        expect(result.freeIsReceived).toBe(true);
+    });
+
+    test('802. Page Réparations rend sans crash après import Excel', async ({ page }) => {
+        // Suite logique de 801 : la page Réparations doit pouvoir s'afficher
+        // après que des SAV importés ont été commités. Avant le fix, repair.itemDescription
+        // était undefined et les filtres status === 'ready' échouaient silencieusement.
+        await page.evaluate(() => {
+            const parsed = {
+                sheets: [{
+                    name: 'Réparations TEST', type: 'repairs',
+                    repairs: [{ _importKey: 'r0', date: '2026-01-15T00:00:00Z', clientName: 'Charlie', description: 'Test SAV', price: 50, status: 'paid' }]
+                }],
+                summary: { totalRepairs: 1 }
+            };
+            window.store.commitExcelImport(parsed, { wipe: false, importHistory: false, importBundles: false, importRepairs: true });
+        });
+
+        const result = await page.evaluate(async () => {
+            try {
+                window.router.navigate('repairs');
+                await new Promise(r => setTimeout(r, 250));
+                // Si la page rend, on s'attend à ce que le SAV importé apparaisse quelque part
+                const text = document.body.textContent || '';
+                return { ok: true, hasImported: text.includes('Test SAV') || text.includes('Charlie') || text.includes('SAV-IMP') };
+            } catch (e) { return { ok: false, msg: String(e) }; }
+        });
+
+        // Cleanup
+        await page.evaluate(() => {
+            window.store.state.repairs = (window.store.state.repairs || []).filter(r => r.source !== 'excel-import');
+            window.store.save();
+        });
+
+        expect(result.ok).toBe(true);
+        // Le SAV doit être visible quelque part dans la page (au moins une référence)
+        expect(result.hasImported).toBe(true);
+    });
 });
