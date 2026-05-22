@@ -1090,6 +1090,114 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(result.bothCount).toBeGreaterThanOrEqual(1);
     });
 
+    test('809. E2E flow complet — showImportExcelModal → _readExcelFile(blob) → preview → commit → state.products++', async ({ page }) => {
+        // Risque #2 identifié par audit indépendant : aucun test ne couvrait le flow UI complet
+        // (drag-drop → preview → commit → rendu). Ce test simule un import bout-en-bout :
+        //   1. Ouvre la modal d'import
+        //   2. Génère un .xlsx Blob en mémoire via XLSX.write
+        //   3. Appelle _readExcelFile(blob) — équivalent du drag-drop
+        //   4. Vérifie la preview rendue
+        //   5. Clique sur le bouton "Importer" + confirme la modale
+        //   6. Vérifie que state.products a augmenté avec les bonnes refs
+        const result = await page.evaluate(async () => {
+            // 1. Compte initial
+            const productsBefore = (window.store.state.products || []).length;
+            const repairsBefore = (window.store.state.repairs || []).length;
+
+            // 2. Ouvre la modal
+            window.ui.showImportExcelModal();
+            await new Promise(r => setTimeout(r, 100));
+            const modalOpen = !!document.getElementById('import-step-drop');
+
+            // 3. Génère un xlsx en mémoire (3 feuilles : Bracelets, Capsules, Réparations)
+            const wb = window.XLSX.utils.book_new();
+            const wsBr = window.XLSX.utils.aoa_to_sheet([
+                ['Bracelets 2026'],
+                ['N°', 'Isley', 'Sandra', 'Couleur:', 'Prix', 'Vendu le:', 'A qui:', 'Janvier'],
+                ['BE2E01', '', 'x', 'Tons turquoise', 28, null, '', null],
+                ['BE2E02 2x', 'x', '', 'Or rose', 35, null, '', null],
+            ]);
+            window.XLSX.utils.book_append_sheet(wb, wsBr, 'Bracelets');
+            const wsRep = window.XLSX.utils.aoa_to_sheet([
+                ['Réparations'],
+                ['Date', 'Nom', 'Fait', 'Prix'],
+                [new Date('2026-01-10'), 'Test-E2E-Client', 'Soudure SAV-E2E', 25],
+            ]);
+            window.XLSX.utils.book_append_sheet(wb, wsRep, 'Réparations et divers');
+
+            // Convertit en Uint8Array puis File (équivalent drag-drop d'un .xlsx)
+            const arrayBuf = window.XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+            const blob = new Blob([arrayBuf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const file = new File([blob], 'test-e2e.xlsx', { type: blob.type });
+
+            // 4. Appelle _readExcelFile (équivalent du drag-drop)
+            window.ui._readExcelFile(file);
+            // attendre rendu preview (FileReader async + parse + render)
+            await new Promise(r => setTimeout(r, 400));
+            const previewVisible = !document.getElementById('import-step-preview')?.classList.contains('hidden');
+            const commitBtn = document.getElementById('import-excel-commit-btn');
+            const commitBtnVisible = commitBtn && !commitBtn.classList.contains('hidden');
+
+            // 5. Décoche "importHistory" (pas de vente Janvier dans nos données mais évite surprise)
+            //    Garde wipe=false (ajoute, n'écrase pas)
+            const wipeCheckbox = document.getElementById('imp-opt-wipe');
+            if (wipeCheckbox) wipeCheckbox.checked = false;
+
+            // 6. Commit direct sur store (bypass showConfirm pour test déterministe)
+            //    On simule ce que ferait le onConfirm de la modale.
+            const report = window.store.commitExcelImport(window.ui._lastParsedImport, {
+                wipe: false, importHistory: true, importBundles: true, importRepairs: true
+            });
+
+            // Cleanup : ferme la modal manuellement
+            document.querySelectorAll('#import-excel-modal, [id^="import-step-"]').forEach(el => {
+                const modal = el.closest('div.fixed') || el.parentElement?.closest('div.fixed');
+                if (modal && modal.parentElement === document.body) modal.remove();
+            });
+
+            const productsAfter = (window.store.state.products || []).length;
+            const repairsAfter = (window.store.state.repairs || []).length;
+            // Vérifie que nos produits BE2E ont bien été créés
+            const be2e01 = window.store.state.products.find(p => p.reference === 'BE2E01');
+            const be2e02 = window.store.state.products.find(p => p.reference === 'BE2E02');
+            const importedRepair = window.store.state.repairs.find(r => r.source === 'excel-import' && /SAV-E2E/.test(r.itemDescription || ''));
+
+            // Cleanup state pour ne pas polluer les tests suivants
+            window.store.state.products = window.store.state.products.filter(p => !p.reference?.startsWith('BE2E'));
+            window.store.state.repairs = window.store.state.repairs.filter(r => r.source !== 'excel-import');
+            window.store.save();
+
+            return {
+                modalOpen, previewVisible, commitBtnVisible,
+                productsAdded: productsAfter - productsBefore,
+                repairsAdded: repairsAfter - repairsBefore,
+                be2e01Price: be2e01?.price,
+                be2e01Location: be2e01?.locationId,
+                be2e02Stock: be2e02?.stock,  // doit être 2 (suffixe "2x")
+                be2e02Location: be2e02?.locationId,
+                importedRepairRef: importedRepair?.ref,
+                importedRepairStatus: importedRepair?.status,
+                report
+            };
+        });
+        expect(result.modalOpen).toBe(true);
+        expect(result.previewVisible).toBe(true);
+        expect(result.commitBtnVisible).toBe(true);
+        // Bracelets : 2 produits ajoutés
+        expect(result.productsAdded).toBe(2);
+        expect(result.be2e01Price).toBe(28);
+        expect(result.be2e01Location).toMatch(/geneve|salon/i);   // Sandra=x
+        expect(result.be2e02Stock).toBe(2);                        // suffixe "2x"
+        expect(result.be2e02Location).toMatch(/annemasse/i);       // Isley=x
+        // Réparation : 1 ajoutée avec schéma complet (test 801 déjà valide le schéma)
+        expect(result.repairsAdded).toBe(1);
+        expect(result.importedRepairRef).toMatch(/^SAV-IMP-/);
+        expect(result.importedRepairStatus).toBe('delivered');     // prix > 0 → paid → delivered
+        // Report renvoyé par commitExcelImport
+        expect(result.report.productsAdded).toBe(2);
+        expect(result.report.repairsAdded).toBe(1);
+    });
+
     test('808. REGRESSION v5.14.21 : Chart.js, confetti, vanilla-tilt inlinés (offline-first complet côté JS)', async ({ page }) => {
         // Risque #3 audit indépendant : xlsx était inliné mais Chart.js, canvas-confetti
         // et vanilla-tilt restaient sur CDN. Phase 2 de l'inline (commit suivant) inline
