@@ -427,6 +427,13 @@ window.LUXEPOS_I18N = {
             d3: "294 pièces par catégorie, vue galerie ou tableau, import Excel",
             t4: "Clients",
             d4: "CRM léger, timeline, badges fidélité Bronze→Diamant"
+        },
+        demoLive: {
+            kicker: "Démos animées · sans installation",
+            title: "Voir l'app en action",
+            lede: "Une vente s'encaisse en 5 taps. L'inventaire Excel se déverse en 1,2 seconde. Regarde, c'est en boucle.",
+            demo1Title: "Une vente en 5 taps",
+            demo2Title: "Import Excel intelligent"
         }
     },
 
@@ -852,6 +859,13 @@ window.LUXEPOS_I18N = {
             d3: "294 pieces by category, gallery or table view, Excel import",
             t4: "Clients",
             d4: "Light CRM, timeline, loyalty badges Bronze→Diamond"
+        },
+        demoLive: {
+            kicker: "Animated demos · no install required",
+            title: "See the app in action",
+            lede: "A sale closes in 5 taps. Your Excel inventory pours in in 1.2 seconds. Watch — it loops.",
+            demo1Title: "A sale in 5 taps",
+            demo2Title: "Smart Excel import"
         }
     },
 
@@ -1277,6 +1291,13 @@ window.LUXEPOS_I18N = {
             d3: "294 Stücke nach Kategorie, Galerie- oder Tabellenansicht, Excel-Import",
             t4: "Kundinnen",
             d4: "Schlankes CRM, Timeline, Treuebadges Bronze→Diamant"
+        },
+        demoLive: {
+            kicker: "Animierte Demos · ohne Installation",
+            title: "Die App in Aktion sehen",
+            lede: "Ein Verkauf in 5 Taps. Dein Excel-Lager wird in 1,2 Sekunden importiert. Schau zu, es läuft in Schleife.",
+            demo1Title: "Ein Verkauf in 5 Taps",
+            demo2Title: "Intelligenter Excel-Import"
         }
     },
 
@@ -1702,6 +1723,13 @@ window.LUXEPOS_I18N = {
             d3: "294 pezzi per categoria, vista galleria o tabella, import Excel",
             t4: "Clienti",
             d4: "CRM leggero, timeline, badge fedeltà Bronzo→Diamante"
+        },
+        demoLive: {
+            kicker: "Demo animate · senza installazione",
+            title: "Vedi l'app in azione",
+            lede: "Una vendita si chiude in 5 tap. Il tuo magazzino Excel si riversa in 1,2 secondi. Guarda — è in loop.",
+            demo1Title: "Una vendita in 5 tap",
+            demo2Title: "Import Excel intelligente"
         }
     }
 };
