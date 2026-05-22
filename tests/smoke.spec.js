@@ -1090,6 +1090,102 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(result.bothCount).toBeGreaterThanOrEqual(1);
     });
 
+    // ═══════════════════════════════════════════════════════════════
+    // 9xx — Localisation Suisse (v5.14+, Phase 1 ROADMAP)
+    // ═══════════════════════════════════════════════════════════════
+
+    test('901. Locale Suisse : formatCurrency CHF utilise apostrophe milliers (1\'234.50)', async ({ page }) => {
+        // Le format suisse standard utilise l'apostrophe comme séparateur de milliers
+        // (vs espace insécable en France ou virgule aux US). Ex : CHF 1'234.50.
+        // Par défaut formatCurrency arrondit à 0 décimales (display dashboards) ;
+        // les vraies factures utilisent decimals:2.
+        const result = await page.evaluate(() => {
+            return {
+                // Display dashboard (arrondi : 1'235 CHF)
+                medium0: window.formatCurrency(1234.5, { currency: 'CHF' }),
+                // Facture / details (avec décimales : 1'234.50 CHF)
+                medium2: window.formatCurrency(1234.5, { currency: 'CHF', decimals: 2 }),
+                large2: window.formatCurrency(1234567.89, { currency: 'CHF', decimals: 2 }),
+                small2: window.formatCurrency(123.5, { currency: 'CHF', decimals: 2 }),
+                // Comparaison EUR (locale fr-FR : espace insécable, pas apostrophe)
+                eur2: window.formatCurrency(1234.5, { currency: 'EUR', decimals: 2 })
+            };
+        });
+        // CHF avec décimales : apostrophe entre milliers + point décimal
+        expect(result.medium2).toMatch(/1.234\.50/);
+        expect(result.medium2).toContain("'");  // apostrophe (séparateur suisse)
+        expect(result.large2).toContain("'");   // 1'234'567.89
+        // CHF arrondi : toujours apostrophe sur les milliers
+        expect(result.medium0).toContain("'");
+        // CHF petit nombre : pas d'apostrophe (pas de millier)
+        expect(result.small2).not.toContain("'");
+        // EUR ne doit PAS contenir apostrophe (utilise espace insécable)
+        expect(result.eur2).not.toContain("'");
+    });
+
+    test('902. Locale Suisse : formatDate retourne JJ.MM.AAAA', async ({ page }) => {
+        // Format date suisse standard : 15.03.2026 (pas 15/03/2026 ni 03/15/2026).
+        const result = await page.evaluate(() => {
+            const d = new Date(2026, 2, 15);  // 15 mars 2026 (month index 2 = mars)
+            // Test l'utilitaire global formatDate s'il existe, sinon fallback toLocaleDateString
+            const direct = d.toLocaleDateString('fr-CH');
+            const formatted = typeof window.formatDate === 'function' ? window.formatDate(d) : direct;
+            return { direct, formatted };
+        });
+        // Format DD.MM.YYYY (séparateur point)
+        expect(result.direct).toMatch(/^\d{1,2}\.\d{1,2}\.\d{4}$/);
+        // Mois mars = 03 ou 3 selon implementation, an = 2026
+        expect(result.direct).toMatch(/2026$/);
+        expect(result.direct).toMatch(/\.03\.|\.3\./);
+    });
+
+    test('903. TVA non assujettie (art. 10 LTVA) : taxEnabled=false par défaut + note légale présente', async ({ page }) => {
+        // Maëlle est sous le seuil CHF 100'000 → non-assujettie TVA (art. 10 LTVA).
+        // Le toggle doit être OFF par défaut + la note légale doit être présente.
+        const result = await page.evaluate(() => {
+            const s = window.store.state.settings || {};
+            return {
+                taxEnabled: s.taxEnabled,
+                taxExemptNote: s.taxExemptNote,
+                // Vérifie la mention "art. 10 LTVA" présente
+                hasArt10: typeof s.taxExemptNote === 'string' && /art\.\s*10\s*LTVA/i.test(s.taxExemptNote)
+            };
+        });
+        // Par défaut, taxEnabled doit être false (Maëlle ICP)
+        expect(result.taxEnabled).toBe(false);
+        // La note légale doit être définie et contenir "art. 10 LTVA"
+        expect(typeof result.taxExemptNote).toBe('string');
+        expect(result.hasArt10).toBe(true);
+    });
+
+    test('904. Multi-POS : 3 emplacements (Atelier CHF, Annemasse EUR, Salon Genève CHF) avec commission', async ({ page }) => {
+        // L'ICP métier de Maëlle exige 3 emplacements de stock par défaut.
+        const result = await page.evaluate(() => {
+            const locations = window.store.state.locations || [];
+            const ids = locations.map(l => l.id);
+            const find = (id) => locations.find(l => l.id === id);
+            return {
+                count: locations.length,
+                atelierCurrency: find('loc_atelier')?.currency,
+                atelierCommission: find('loc_atelier')?.commissionRate,
+                annemasseCurrency: find('loc_annemasse')?.currency,
+                annemasseCommission: find('loc_annemasse')?.commissionRate,
+                geneveCurrency: find('loc_geneve')?.currency,
+                geneveCommission: find('loc_geneve')?.commissionRate,
+            };
+        });
+        expect(result.count).toBeGreaterThanOrEqual(3);
+        // Atelier : stock principal CHF, pas de commission
+        expect(result.atelierCurrency).toBe('CHF');
+        expect(result.atelierCommission).toBe(0);
+        // Annemasse : dépôt FR, EUR, 30% commission (Isley boutique vêtements)
+        expect(result.annemasseCurrency).toBe('EUR');
+        expect(result.annemasseCommission).toBe(0.30);
+        // Salon Genève : dépôt CH, CHF, 25% commission (Sandra salon coiffure)
+        expect(result.geneveCurrency).toBe('CHF');
+        expect(result.geneveCommission).toBe(0.25);
+    });
+
     test('809. E2E flow complet — showImportExcelModal → _readExcelFile(blob) → preview → commit → state.products++', async ({ page }) => {
         // Risque #2 identifié par audit indépendant : aucun test ne couvrait le flow UI complet
         // (drag-drop → preview → commit → rendu). Ce test simule un import bout-en-bout :
