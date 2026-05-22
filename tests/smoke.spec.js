@@ -1001,6 +1001,95 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(result.cdnRefCount).toBe(0);
     });
 
+    test('804. parseExcelWorkbook : feuille Bracelets — détecte refs, prix, suffixe "2x" → stock=2, ventes', async ({ page }) => {
+        // Test parser de bout en bout en construisant un workbook en mémoire via XLSX.utils.
+        // Couvre les règles métier identifiées par l'agent Plan :
+        //   - suffixe "2x" dans la ref → stock=2
+        //   - trailing "." retiré ("B15." → "B15")
+        //   - Isley=x → emplacement Annemasse (EUR)
+        //   - Sandra=x → emplacement Salon Genève (CHF)
+        //   - col mois remplie + col "Vendu le:" → entrée vente
+        const result = await page.evaluate(() => {
+            // Construit une feuille Bracelets minimale en mémoire
+            const aoa = [
+                ['Bracelets 2026', null, null, null, null, null, null, null],
+                ['N°', 'Isley', 'Sandra', 'Couleur:', 'Prix', 'Vendu le:', 'A qui:', 'Janvier'],
+                ['B01.', 'x', '', 'Turquoise doré', 25, null, '', null],
+                ['B02 2x', '', 'x', 'Vert sauge', 30, null, '', null],
+                ['B03', '', '', 'Rouge', 35, '2026-01-12', 'Sophie', 32],
+            ];
+            const ws = window.XLSX.utils.aoa_to_sheet(aoa);
+            const wb = { SheetNames: ['Bracelets'], Sheets: { 'Bracelets': ws } };
+            const parsed = window.store.parseExcelWorkbook(wb);
+            const sheet = parsed.sheets.find(s => s.name === 'Bracelets');
+            // La vente attachée à B03 vit dans sheet.sales (array au niveau feuille)
+            const b03Sale = (sheet?.sales || []).find(s => s.productRef === 'B03');
+            return {
+                hasSheet: !!sheet,
+                type: sheet?.type,
+                productCount: sheet?.products?.length,
+                refs: sheet?.products?.map(p => p.reference),
+                stocks: sheet?.products?.map(p => p.stock),
+                prices: sheet?.products?.map(p => p.price),
+                locations: sheet?.products?.map(p => p.locationId),
+                salesCount: sheet?.sales?.length,
+                hasSale: !!b03Sale,
+                saleAmount: b03Sale?.pricePaid,
+                saleClient: b03Sale?.client
+            };
+        });
+        expect(result.hasSheet).toBe(true);
+        expect(result.type).toBe('products');
+        expect(result.productCount).toBe(3);
+        // B01. → trailing "." retiré
+        expect(result.refs).toContain('B01');
+        // B02 2x → stock = 2, ref nettoyée
+        const b02Idx = result.refs.findIndex(r => r === 'B02');
+        expect(b02Idx).toBeGreaterThanOrEqual(0);
+        expect(result.stocks[b02Idx]).toBe(2);
+        // B03 → stock 1 par défaut, mais vendu → décrémenté à 0 (cohérent : pièce unique partie)
+        const b03Idx = result.refs.findIndex(r => r === 'B03');
+        expect(result.stocks[b03Idx]).toBe(0);
+        // Emplacements
+        const b01Idx = result.refs.findIndex(r => r === 'B01');
+        expect(result.locations[b01Idx]).toMatch(/annemasse/i);  // Isley=x
+        expect(result.locations[b02Idx]).toMatch(/geneve|genève|salon/i);  // Sandra=x
+        // B03 a une vente : 32€ chez Sophie en janvier
+        expect(result.hasSale).toBe(true);
+        expect(result.saleAmount).toBe(32);
+        expect(result.saleClient).toBe('Sophie');
+    });
+
+    test('805. parseExcelWorkbook : double marquage Isley+Sandra → Atelier + warning à revoir', async ({ page }) => {
+        // Cas limite identifié dans les données réelles : 5 produits dans la feuille
+        // Bracelets de Maëlle avaient B=x ET C=x simultanément. Décision : fallback
+        // Atelier + flag _warn sur le produit pour qu'elle puisse revoir manuellement.
+        const result = await page.evaluate(() => {
+            const aoa = [
+                ['Bracelets test', null, null, null, null],
+                ['N°', 'Isley', 'Sandra', 'Couleur:', 'Prix'],
+                ['B256', 'x', 'x', 'Doré', 28],  // double marquage
+            ];
+            const ws = window.XLSX.utils.aoa_to_sheet(aoa);
+            const wb = { SheetNames: ['Bracelets'], Sheets: { 'Bracelets': ws } };
+            const parsed = window.store.parseExcelWorkbook(wb);
+            const sheet = parsed.sheets.find(s => s.name === 'Bracelets');
+            const product = sheet?.products?.[0];
+            return {
+                location: product?.locationId,
+                productWarn: product?._warn,
+                bothCount: sheet?.stats?.byLocation?.both
+            };
+        });
+        // Le produit doit être placé à l'Atelier en fallback
+        expect(result.location).toMatch(/atelier/i);
+        // Un warning par produit doit signaler le double marquage
+        expect(result.productWarn).toBeTruthy();
+        expect(result.productWarn).toMatch(/double|revoir/i);
+        // Le compteur stats.byLocation.both doit avoir incrémenté
+        expect(result.bothCount).toBeGreaterThanOrEqual(1);
+    });
+
     test('801. REGRESSION v5.14.20 : commitExcelImport repairs respecte le schéma addRepair (ref, itemDescription, finalPrice, history[])', async ({ page }) => {
         // Bug Phase 0 (trouvé par agent Plan) : commitExcelImport poussait
         // {date, clientName, description, price, status:'paid'|'free'} qui crashait
