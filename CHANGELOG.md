@@ -5,6 +5,41 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.21] — 2026-05-18 — Offline-first complet côté JS + tests Colliers
+
+### Ajouté — Inline Chart.js, canvas-confetti, vanilla-tilt
+Suite audit indépendant qui notait que SheetJS était inliné mais que 3 autres
+libs JS restaient sur CDN (la promesse "zéro CDN au runtime" n'était que
+partielle). Phase complétée :
+
+- **Chart.js 4.4.0** (dashboards, graphes ventes) → inliné depuis
+  `dist-web/vendor/chart-4.4.0.umd.min.js` (200 KB).
+- **canvas-confetti 1.9.2** (effets ventes > 1000/2000/5000 €) → inliné
+  depuis `dist-web/vendor/canvas-confetti-1.9.2.min.js` (10 KB).
+- **vanilla-tilt 1.8.1** (3D tilt cards) → inliné depuis
+  `dist-web/vendor/vanilla-tilt-1.8.1.min.js` (8 KB).
+
+Total HTML : 3.5 → 3.7 MB (+220 KB). Plus aucun `<script src=cdn...>` côté JS.
+
+Reste sur CDN (non bloquant) :
+- `fonts.googleapis.com` (police Inter + Playfair) — fallback système OK.
+- `cdn.jsdelivr.net/npm/open-dyslexic` woff — opt-in dans paramètres accessibilité.
+
+### Ajouté — Tests parser Excel
+- **807** : feuille Colliers avec col `Longueurs` insérée entre `Couleur:` et
+  `Prix`. Vérifie que `_mapColumns` détecte dynamiquement les positions et que
+  les prix + ventes (col `Janvier` décalée) sont correctement lus.
+- **808** : régression offline-first complet — `Chart`, `confetti`,
+  `VanillaTilt`, `XLSX` tous définis + 0 ref CDN dans le DOM.
+
+58/61 Playwright pass (était 56/58, +3 tests ; 2 legacy `/api/*` attendus,
+1 skip).
+
+### Outils dev
+- `inline-vendors.js` étendu pour gérer Chart.js, confetti, tilt en plus de
+  Tailwind/Lucide/SheetJS. Helper `inlineCdn(html, pattern, marker, content)`
+  factorise la logique. Idempotent : ré-exécution sans corruption.
+
 ## [5.14.20] — 2026-05-18 — Fix schéma repairs import Excel (P0)
 
 ### Corrigé — `commitExcelImport` produisait des SAV avec un schéma incompatible

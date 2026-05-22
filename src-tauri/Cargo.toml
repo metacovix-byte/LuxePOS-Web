@@ -1,6 +1,6 @@
 [package]
 name = "luxepos"
-version = "5.14.20"
+version = "5.14.21"
 description = "LuxePOS — Caisse & gestion de bijouterie artisanale (Suisse)"
 authors = ["Maëlle"]
 edition = "2021"

@@ -1090,6 +1090,81 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(result.bothCount).toBeGreaterThanOrEqual(1);
     });
 
+    test('808. REGRESSION v5.14.21 : Chart.js, confetti, vanilla-tilt inlinés (offline-first complet côté JS)', async ({ page }) => {
+        // Risque #3 audit indépendant : xlsx était inliné mais Chart.js, canvas-confetti
+        // et vanilla-tilt restaient sur CDN. Phase 2 de l'inline (commit suivant) inline
+        // ces 3 libs aussi. La promesse offline-first est maintenant complète côté JS.
+        const result = await page.evaluate(() => {
+            const scripts = Array.from(document.querySelectorAll('script[src]'));
+            const cdnJsRefs = scripts.filter(s =>
+                /chart\.js|canvas-confetti|vanilla-tilt|xlsx/i.test(s.src) &&
+                /cdn|jsdelivr|unpkg/i.test(s.src)
+            );
+            return {
+                chartLoaded: typeof window.Chart !== 'undefined',
+                confettiLoaded: typeof window.confetti === 'function',
+                tiltLoaded: typeof window.VanillaTilt !== 'undefined',
+                xlsxLoaded: typeof window.XLSX !== 'undefined',
+                cdnJsCount: cdnJsRefs.length,
+                cdnJsSrcs: cdnJsRefs.map(s => s.src)
+            };
+        });
+        expect(result.chartLoaded).toBe(true);
+        expect(result.confettiLoaded).toBe(true);
+        expect(result.tiltLoaded).toBe(true);
+        expect(result.xlsxLoaded).toBe(true);
+        // Aucun script src CDN pour ces 4 libs JS
+        expect(result.cdnJsCount).toBe(0);
+    });
+
+    test('807. parseExcelWorkbook : feuille Colliers — col Longueurs insérée n\'écrase pas les prix ni les mois', async ({ page }) => {
+        // Cas critique identifié par MEMORY.md + audit indépendant : la feuille Colliers
+        // a une col "Longueurs" insérée entre "Couleur:" et "Prix", ce qui décale
+        // toutes les colonnes suivantes (mois) d'une position. Le parser doit
+        // détecter dynamiquement les positions par nom (pas par index fixe).
+        const result = await page.evaluate(() => {
+            // Reproduction du header Colliers réel : N° | Isley | Sandra | Couleur: | Longueurs | Prix | Vendu le: | A qui: | Janvier | ...
+            const aoa = [
+                ['Colliers 2026', null, null, null, null, null, null, null, null],
+                ['N°', 'Isley', 'Sandra', 'Couleur:', 'Longueurs', 'Prix', 'Vendu le:', 'A qui:', 'Janvier'],
+                ['C01', '', 'x', 'Doré perlé', '45cm', 60, null, '', null],
+                ['C02', 'x', '', 'Argenté', '50/55cm', 75, '2026-01-20', 'Marie', 70],
+            ];
+            const ws = window.XLSX.utils.aoa_to_sheet(aoa);
+            const wb = { SheetNames: ['Colliers'], Sheets: { 'Colliers': ws } };
+            const parsed = window.store.parseExcelWorkbook(wb);
+            const sheet = parsed.sheets.find(s => s.name === 'Colliers');
+            const c01 = sheet?.products?.find(p => p.reference === 'C01');
+            const c02 = sheet?.products?.find(p => p.reference === 'C02');
+            // La vente C02 doit être dans sheet.sales
+            const c02Sale = (sheet?.sales || []).find(s => s.productRef === 'C02');
+            return {
+                productCount: sheet?.products?.length,
+                c01Price: c01?.price,
+                c01Location: c01?.locationId,
+                c02Price: c02?.price,
+                c02Location: c02?.locationId,
+                // Longueurs doit être capturé dans nom ou description (pas écraser le prix)
+                c01HasLengthsInfo: /45cm/.test(JSON.stringify(c01 || {})) || /45cm/.test(c01?.lengths || c01?.description || c01?.name || ''),
+                // Vente détectée correctement malgré le décalage
+                hasC02Sale: !!c02Sale,
+                c02SaleAmount: c02Sale?.pricePaid,
+                c02SaleClient: c02Sale?.client
+            };
+        });
+        expect(result.productCount).toBe(2);
+        // CRITIQUE : prix correctement lu (60 et 75), pas décalé sur Longueurs ("45cm" lu comme prix = bug)
+        expect(result.c01Price).toBe(60);
+        expect(result.c02Price).toBe(75);
+        // Emplacements correctement détectés
+        expect(result.c01Location).toMatch(/geneve|salon/i);  // Sandra=x
+        expect(result.c02Location).toMatch(/annemasse/i);     // Isley=x
+        // CRITIQUE : vente détectée dans col "Janvier" malgré décalage (col 9 au lieu de 8)
+        expect(result.hasC02Sale).toBe(true);
+        expect(result.c02SaleAmount).toBe(70);
+        expect(result.c02SaleClient).toBe('Marie');
+    });
+
     test('806. parseExcelWorkbook : CAPSULES → bundles avec componentRefs parsés (séparateurs / , ; +)', async ({ page }) => {
         // Les capsules de Maëlle utilisent col "Créations" avec format
         // "PC58/C190/B184/B84" ou variantes "PC58,C190" ou "PC58+C190". Le parser
