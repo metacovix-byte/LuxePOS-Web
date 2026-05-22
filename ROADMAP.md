@@ -78,15 +78,55 @@
 - ✅ Wizard "Recalculer depuis BOM"
 - ✅ 8 tests Playwright (701–708)
 
-### Hotfix scanner (v5.14.18)
-- ✅ Fix `_isScannerAvailable` (modal produit ne crash plus sur Windows)
-- ✅ Test de régression 608
-- ✅ What's New modal multi-version (v5.14.18 par défaut, v4.8 archivée)
+### Hotfix scanner (v5.14.18 → v5.14.19)
+- ✅ v5.14.18 fix `_isScannerAvailable` (test 608)
+- ⚠️ v5.14.18 ÉTAIT INCOMPLET — audit indépendant a trouvé 3 autres sites
+  `this._isCapacitor()` dans UI (l. 11272, 15478, 28173) → modal produit
+  crashait toujours après install.
+- ✅ v5.14.19 fix COMPLET (3 sites + test 611 régression bout-en-bout)
+- ✅ What's New modal multi-version (v5.14.19 par défaut, v4.8 archivée)
+
+### Import Excel (v5.14.20, Phase 0)
+- ✅ Découverte audit : flow déjà 90% implémenté (Store l. 7229-7982, UI l. 17554-17920)
+- ✅ Fix P0 : schéma `repairs` aligné avec `addRepair` (ref, itemDescription,
+  finalPrice, history[], status mapping paid→delivered)
+- ✅ Tests 801–809 (9 tests Excel) :
+  * 801-802 : schéma repairs + page Répa render
+  * 803 : SheetJS inliné (offline-first)
+  * 804 : parser Bracelets (refs, prix, stock 2x, locations, ventes)
+  * 805 : double marquage Isley+Sandra → Atelier + warning
+  * 806 : CAPSULES → bundles avec componentRefs (séparateurs / , ; +)
+  * 807 : feuille Colliers (col Longueurs décalée — risque #1 audit)
+  * 808 : Chart+confetti+tilt+XLSX tous inlinés (risque #3 audit)
+  * 809 : flow E2E complet drag-drop → preview → commit (risque #2 audit)
+- ✅ Phase 0.5 (mapping UI colonnes) : différé (besoin pas validé sur 1 user)
+
+### Offline-first complet côté JS (v5.14.21)
+- ✅ SheetJS 0.18.5 (882 KB), Chart.js 4.4.0 (200 KB), canvas-confetti 1.9.2
+  (10 KB), vanilla-tilt 1.8.1 (8 KB) tous inlinés.
+- ✅ ZÉRO `<script src=cdn>` côté JS. HTML 3.7 MB (acceptable pour app native).
+- ✅ Reste sur CDN : fonts.googleapis (fallback système OK), open-dyslexic
+  woff (opt-in accessibilité).
+- ✅ `inline-vendors.js` idempotent + helper `inlineCdn()` factorisé.
+
+### Localisation Suisse (Phase 1 — déjà implémentée, verrouillée par tests)
+- ✅ CHF devise par défaut
+- ✅ Locale fr-CH : apostrophe milliers (1'234.50) avec décimales,
+  arrondi entier (1'235 CHF) par défaut dashboard
+- ✅ Format date JJ.MM.AAAA via `toLocaleDateString('fr-CH')`
+- ✅ TVA non assujettie par défaut (taxEnabled=false) + note légale
+  "TVA non applicable, art. 10 LTVA" en pied de facture
+- ✅ Paiements TWINT/Revolut/Cash en premier dans le dropdown
+- ✅ Multi-POS 3 emplacements (Atelier CHF, Annemasse EUR 30% commission,
+  Salon Genève CHF 25% commission)
+- ✅ 4 tests Playwright 901-904 verrouillent ce comportement
 
 ## 🚧 En cours (mai 2026)
 
-Rien d'actif côté code — l'app v5.14.18 est en attente de feedback Maëlle.
-Prochaines pistes : Phase 0 (import Excel) ou multi-langue UI app.
+Rien d'actif côté code. v5.14.21 est en attente d'install Maëlle.
+65 tests Playwright Pass (8 Excel + 4 Suisse + reste métier).
+Prochaines pistes : Phase 3 (workflow Instagram/WhatsApp) ou Phase 2.5
+(commissions reconciliation depuis liste papier partenaires).
 
 ---
 
