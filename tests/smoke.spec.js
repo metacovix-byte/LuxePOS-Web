@@ -1090,6 +1090,42 @@ test.describe('LuxePOS — Smoke tests v5.14 (30 tests)', () => {
         expect(result.bothCount).toBeGreaterThanOrEqual(1);
     });
 
+    test('806. parseExcelWorkbook : CAPSULES → bundles avec componentRefs parsés (séparateurs / , ; +)', async ({ page }) => {
+        // Les capsules de Maëlle utilisent col "Créations" avec format
+        // "PC58/C190/B184/B84" ou variantes "PC58,C190" ou "PC58+C190". Le parser
+        // doit splitter sur tous ces séparateurs.
+        const result = await page.evaluate(() => {
+            const aoa = [
+                ['CAPSULES 2026', null, null, null],
+                ['N°', 'Couleur:', 'Créations', 'Prix'],
+                ['CAP1', 'Mariage automnal', 'PC58/C190/B184/B84', 75],
+                ['CAP2', 'Cadeau', 'PC10,B20,B30', 50],
+                ['CAP3', 'Bundle simple', 'B100+B101', 40],
+            ];
+            const ws = window.XLSX.utils.aoa_to_sheet(aoa);
+            const wb = { SheetNames: ['CAPSULES'], Sheets: { 'CAPSULES': ws } };
+            const parsed = window.store.parseExcelWorkbook(wb);
+            const sheet = parsed.sheets.find(s => s.name === 'CAPSULES');
+            return {
+                type: sheet?.type,
+                bundleCount: sheet?.bundles?.length,
+                cap1Refs: sheet?.bundles?.[0]?.componentRefs,
+                cap1Price: sheet?.bundles?.[0]?.price,
+                cap2Refs: sheet?.bundles?.[1]?.componentRefs,
+                cap3Refs: sheet?.bundles?.[2]?.componentRefs,
+            };
+        });
+        expect(result.type).toBe('bundles');
+        expect(result.bundleCount).toBe(3);
+        // CAP1 split sur "/"
+        expect(result.cap1Refs).toEqual(['PC58', 'C190', 'B184', 'B84']);
+        expect(result.cap1Price).toBe(75);
+        // CAP2 split sur ","
+        expect(result.cap2Refs).toEqual(['PC10', 'B20', 'B30']);
+        // CAP3 split sur "+"
+        expect(result.cap3Refs).toEqual(['B100', 'B101']);
+    });
+
     test('801. REGRESSION v5.14.20 : commitExcelImport repairs respecte le schéma addRepair (ref, itemDescription, finalPrice, history[])', async ({ page }) => {
         // Bug Phase 0 (trouvé par agent Plan) : commitExcelImport poussait
         // {date, clientName, description, price, status:'paid'|'free'} qui crashait
