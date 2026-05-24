@@ -5,6 +5,28 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.22] — 2026-05-24 — Hotfix sécurité (back-port LuxePOS-Lite v1.0.1)
+
+Audit indépendant sur LuxePOS-Lite (fork de v5.14.21) a identifié 5 fixes
+sécurité applicables aussi au codebase principal. Back-portés ici.
+
+### Sécurité — 3 critiques + 2 importantes
+- 🔴 **CSP (Content Security Policy)** ajoutée dans `tauri.conf.json`
+  (était `csp: null`). Liste blanche : self + gstatic Firebase + Google fonts.
+- 🔴 **XSS — `esc()` ajouté** sur `${product.name}`, `${client.email/phone/
+  address}`, `${item.name/reference}` dans modal variantes + facture imprimée
+  (luxepos-final.html l. 21307, 21393, 21636-21639, 21668-21669).
+- 🔴 **Upload SVG retiré** du sélecteur logo boutique (l. 13974).
+  Accept : `png,jpg` uniquement (SVG peut contenir `<script>`).
+- 🟡 **Tauri capabilities réduites** (principle of least privilege) :
+  retiré `fs:default`, `process:default`, `shell:default`. Gardé : dialog,
+  shell:allow-open, updater + core:*.
+- 🟡 **Validation Excel** (taille < 10 MB + extension xlsx/xls/csv) dans
+  `_readExcelFile()` — prévient DoS via fichier malformé.
+
+### Tests
+58/61 Playwright pass (inchangé, 2 legacy `/api/*` + 1 skip attendus).
+
 ## [5.14.21] — 2026-05-18 — Offline-first complet côté JS + tests Colliers
 
 ### Ajouté — Inline Chart.js, canvas-confetti, vanilla-tilt

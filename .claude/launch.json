@@ -6,6 +6,13 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "http-server", "-p", "8765", "-c-1", "--silent"],
       "port": 8765
+    },
+    {
+      "name": "trahison",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": ["pnpm", "--filter", "@crumble/app-trahison", "dev"],
+      "port": 5173,
+      "cwd": "C:\\Users\\mouni\\OneDrive\\Documents\\SB\\Crumble-Studio"
     }
   ]
 }
