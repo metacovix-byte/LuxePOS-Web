@@ -5,6 +5,20 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.23] — 2026-05-25 — URGENT : rollback CSP (Tailwind cassé sur binaire Tauri)
+
+Même bug que LuxePOS Lite v1.0.2 — la CSP ajoutée en v5.14.22 bloquait
+Tailwind Play CDN runtime. Visible uniquement sur binaire installé (pas
+en local http-server). Découvert via screenshot de Maëlle sur Lite v1.0.1.
+
+### Corrigé
+- `tauri.conf.json` : `csp` repassé à `null` (état v5.14.21).
+- Les 4 autres fixes sécu v5.14.22 restent en place (XSS esc(), SVG, perms, Excel).
+
+### À refaire en v5.14.24+
+CSP compatible Tauri WebView2 + Tailwind dynamique, après test sur binaire
+compilé (pas seulement http-server).
+
 ## [5.14.22] — 2026-05-24 — Hotfix sécurité (back-port LuxePOS-Lite v1.0.1)
 
 Audit indépendant sur LuxePOS-Lite (fork de v5.14.21) a identifié 5 fixes
