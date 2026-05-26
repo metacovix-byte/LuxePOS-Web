@@ -5,6 +5,29 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.24] — 2026-05-25 — Hotfix synthèse 8 agents audit (back-port Lite v1.0.3)
+
+Audit massif par 8 agents indépendants a identifié 24 fixes. Back-port des
+P0/P1/P2/P3 critiques depuis Lite v1.0.3. Voir LuxePOS-Lite CHANGELOG pour
+détail complet.
+
+### 🔴 P0 — Bugs corruption données
+- `completeSale` décrémente maintenant `stockByLocation[]` (multi-POS bug)
+- `deleteProduct` détecte enfin les ventes liées (id || productId)
+- `convertReservationToSale` n'écrase plus `currentClient` (string ID)
+- `client.totalSpent/purchaseCount` coalesce `|| 0` (anti-NaN)
+
+### 🔴 P1 — UI bloquant mobile
+- Bottom nav 6 → 5 items mobile (cache Commandes via `hidden md:flex`)
+
+### 🔴 P2 — Cohérence devise
+- Atelier "Valeur stock" : `settings.currency` dynamique (était EUR codé)
+- Modal objectif CA mensuel : `(€)` → `(${currency})`
+- Dropdown paiement : `Cash` → `Espèces`
+
+### 🔴 P3 — Contraste a11y WCAG AA
+- 48 helper texts `text-gray-400` → `text-gray-500` (ratio 3.55:1 → 5.95:1)
+
 ## [5.14.23] — 2026-05-25 — URGENT : rollback CSP (Tailwind cassé sur binaire Tauri)
 
 Même bug que LuxePOS Lite v1.0.2 — la CSP ajoutée en v5.14.22 bloquait
