@@ -5,6 +5,36 @@ Toutes les versions notables de LuxePOS sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [5.15.0] — 2026-05-30 — Nouvelle charte graphique Zapier + import photos universel (audit 49 agents)
+
+### Charte graphique « Zapier »
+- Nouveau thème **`zapier`** (appliqué par défaut, migration one-time) : canvas crème
+  `#fffefb`, encre café `#201515`, accent **orange `#ff4f00`**, mode clair.
+- L'ancien design reste accessible : **tous les thèmes** dans Paramètres → Apparence,
+  + backup fichier `backups/luxepos-final-PRE-ZAPIER-2026-05-30.html`.
+- Notification visible à la migration (au lieu d'un simple log console).
+
+### Import photos — fonctionne PARTOUT (app installée, PWA, en ligne, hors-ligne)
+- Import principal via **« Importer des photos (choisir un dossier) »** (`openBulkPhotoImport`) :
+  100 % client-side, matching par référence + **compression automatique** (800px / JPEG 0.82).
+  Plus besoin de serveur local ni de `photo-map.json`.
+- L'ancien auto-link depuis « Z0. STOCK 2026 » devient une **option avancée** (serveur local).
+- **Extraction de référence enrichie** : réfs composées (`B37+CO63`), variantes (`C91 2x`),
+  noms Windows (`Collier B44.jpg`), doublons (`B179 (2)`).
+- **Matching fuzzy** : exact → normalisé → sous-chaîne (la plus longue gagne).
+- **Garde-fou quota** : estimation du poids avant commit, avertissement au-delà de ~45 Mo.
+
+### Robustesse Excel
+- Garde sur `workbook.SheetNames` / `workbook.Sheets` (fichier corrompu/vide → message clair).
+
+### Corrections issues de l'audit multi-agent (49 agents, 43 findings confirmés)
+- **Intégrité des thèmes** : ids du picker alignés sur le CSS (`rose-gold`, `sapphire`, `ruby`)
+  — auparavant « Or rose » et « Royal » ne s'appliquaient jamais.
+- **Conflit clair/sombre** : le mode clair Zapier n'est forcé qu'**une fois** ; l'utilisateur
+  peut ensuite basculer librement (plus de réécrasement au refresh).
+- **Charte** : bouton « Découvrir LuxePOS » repassé sur la couleur de marque.
+- Service Worker v4.8 : `photo-map.json` en network-only (plus d'erreur `Unexpected token '<'`).
+
 ## [5.14.24] — 2026-05-25 — Hotfix synthèse 8 agents audit (back-port Lite v1.0.3)
 
 Audit massif par 8 agents indépendants a identifié 24 fixes. Back-port des

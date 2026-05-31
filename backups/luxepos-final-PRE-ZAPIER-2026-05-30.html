@@ -320,7 +320,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
          ═══════════════════════════════════════════════════════════════════════ -->
     <script>
         const APP_CONFIG = Object.freeze({
-            VERSION: '5.15.0',
+            VERSION: '5.14.25',
 
             // ── Durées (en millisecondes)
             TIME: Object.freeze({
@@ -525,33 +525,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             --brand-light: #ef4444;
             --brand-dark: #991b1b;
             --brand: #dc2626;
-        }
-
-        /* ═══════════════════════════════════════════════════════════════════════
-         * v5.14.26 — THÈME ZAPIER (relooking : crème chaud · encre café · orange)
-         *   Inspiré du design system Zapier (généré via getdesign).
-         *   Override des surfaces ET du texte → cohérent même si dark-mode actif.
-         *   Le JS force le mode clair quand ce thème est sélectionné.
-         * ═══════════════════════════════════════════════════════════════════════ */
-        body[data-theme="zapier"] {
-            /* Accent orange — la signature de conversion Zapier */
-            --brand-main: #ff4f00;
-            --brand-light: #ff6a2b;
-            --brand-dark: #e64700;
-            --brand: #ff4f00;
-            /* Surfaces crème chaudes (pas de blanc pur — la chaleur EST la marque) */
-            --bg-primary: #fffefb;
-            --bg-secondary: #f8f4f0;
-            --bg-tertiary: #f1ece5;
-            /* Encre café (jamais de noir pur) */
-            --text-primary: #201515;
-            --text-secondary: #605d52;
-            --text-tertiary: #939084;
-            --border-color: #e7ded2;
-            /* Glass + ombres adaptés au crème */
-            --glass-bg: rgba(255, 254, 251, 0.92);
-            --glass-border: rgba(32, 21, 21, 0.08);
-            --shadow-color: rgba(32, 21, 21, 0.10);
         }
 
         /* ═══════════════════════════════════════════════════════════════════════
@@ -4139,28 +4112,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const extractRefFromFilename = (filename) => {
         if (!filename || typeof filename !== 'string') return null;
         // Retire l'extension
-        let name = filename.replace(/\.[a-z0-9]{2,5}$/i, '').trim();
-        // v5.15.0 — Retire les marqueurs de variation / duplication courants en fin de nom
-        name = name.replace(/[\s_-]*\(\d+\)\s*$/, '');                                            // "B44 (2)"
-        name = name.replace(/[\s_-]+(copy|copie|main|front|back|recto|verso|bis|v\d+)$/i, '');     // "B44_front", "B44-bis"
-        name = name.trim();
-        if (!name) return null;
-        // 1) Référence COMPOSÉE en tête : lettres+chiffres avec séparateurs internes
-        //    (ex : B37+CO63, C91 2x, BS-DIA-1500, PC58/C190)
-        const composite = name.match(/^([A-Za-z]{1,4}\d+(?:\s*[+/.\-]\s*[A-Za-z]{0,4}\d+|\s+\d+x\b)*)/i);
-        if (composite) {
-            return composite[1].toUpperCase()
-                .replace(/\s*([+/.\-])\s*/g, '$1')   // normalise les séparateurs (pas d'espaces autour)
-                .replace(/\s+/g, ' ').trim();
-        }
-        // 2) Référence SIMPLE en tête (ex : B179, CO100, PC22)
-        const lead = name.match(/^([A-Za-z]{1,4}\d+)/);
-        if (lead) return lead[1].toUpperCase();
-        // 3) Référence EMBARQUÉE (ex : "Collier B44" copié depuis l'explorateur Windows)
-        const embedded = name.match(/\b([A-Za-z]{1,4}\d+)\b/);
-        if (embedded) return embedded[1].toUpperCase();
-        // 4) Dernier recours : le nom nettoyé tel quel
-        return name.toUpperCase();
+        const noExt = filename.replace(/\.[a-z0-9]{2,5}$/i, '');
+        // Le séparateur "-" ou "_" suivi d'un mot/numéro (mais PAS si ce mot fait partie de la ref originale)
+        // Heuristique : on coupe au 1er "-NN" (numéro après tiret) ou "_alpha" ou " " ou "("
+        // Mais on conserve les "." et chiffres internes (cas C91.2x).
+        // Pattern : on garde tout jusqu'au 1er séparateur explicite de variation.
+        const match = noExt.match(/^([A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)/);
+        if (!match) return null;
+        return match[1].toUpperCase();
     };
     window.extractRefFromFilename = extractRefFromFilename;
 
@@ -7481,15 +7440,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             const sheetsResult = [];
             const summary = { totalProducts: 0, totalSales: 0, totalBundles: 0, totalRepairs: 0, errors: 0, warnings: 0, ignoredSheets: [] };
 
-            // v5.15.0 — Garde-fou fichier corrompu / vide : SheetNames peut manquer.
-            if (!workbook || !Array.isArray(workbook.SheetNames) || workbook.SheetNames.length === 0) {
-                return { sheets: [], summary: { ...summary, ignoredSheets: ['Fichier Excel vide ou illisible'] } };
-            }
-
             for (const sheetName of workbook.SheetNames) {
-                const ws = workbook.Sheets ? workbook.Sheets[sheetName] : null;
-                if (!ws) { summary.ignoredSheets.push(sheetName + ' (feuille illisible)'); continue; }
-                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false, raw: true }) || [];
+                const ws = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false, raw: true });
                 const category = this._excelCategoryForSheet(sheetName);
 
                 // Feuilles spéciales
@@ -8958,27 +8911,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 console.log('🧘 v5.1 : effets visuels lourds désactivés par défaut (migration UI calme).');
             }
 
-            // v5.14.26 — Relook Zapier : migration one-time vers le thème Zapier.
-            // L'ancien design reste accessible (tous les thèmes dans le picker + backup
-            // fichier backups/luxepos-final-PRE-ZAPIER-2026-05-30.html).
-            // On force le mode CLAIR UNE SEULE FOIS (Zapier est un thème crème). Ensuite
-            // l'utilisateur reste libre de basculer clair/sombre via le bouton thème.
-            if (s._zapierRelookV1426 !== true) {
-                s.colorTheme = 'zapier';
-                s._zapierRelookV1426 = true;
-                body.classList.remove('dark-mode');
-                try { localStorage.setItem('luxepos_theme', 'light'); } catch (e) {}
-                try { window.store.save(); } catch (e) {}
-                // Notification VISIBLE (pas seulement console) : l'utilisatrice doit savoir comment revenir.
-                try {
-                    setTimeout(() => this.toast?.(
-                        '🎨 Nouveau design « Zapier » appliqué. Pour revenir : Paramètres → Apparence → Thème de couleur.',
-                        'info', 8000
-                    ), 1500);
-                } catch (e) {}
-                console.log('🎨 v5.15.0 : relook Zapier appliqué (changez de thème dans Paramètres pour revenir).');
-            }
-
             // Thème couleur (émeraude par défaut)
             if (s.colorTheme && s.colorTheme !== 'emerald') {
                 body.setAttribute('data-theme', s.colorTheme);
@@ -9008,8 +8940,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             const themeColorMeta = document.querySelector('meta[name="theme-color"]');
             if (themeColorMeta) {
                 const colors = {
-                    'zapier': '#ff4f00', 'rose-gold': '#e11d74', 'champagne': '#c9a227',
-                    'onyx': '#1e293b', 'sapphire': '#3b82f6', 'ruby': '#dc2626', 'emerald': '#10b981'
+                    'rosegold': '#f59e0b', 'champagne': '#eab308', 'onyx': '#1e293b',
+                    'royal': '#8b5cf6', 'emerald': '#10b981'
                 };
                 themeColorMeta.setAttribute('content', colors[s.colorTheme] || '#10b981');
             }
@@ -9020,12 +8952,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
          */
         setColorTheme(themeId) {
             window.store.state.settings.colorTheme = themeId;
-            // v5.15.0 — Zapier est un thème clair (crème) : on bascule en mode clair à la sélection.
-            // (Ensuite l'utilisateur peut re-basculer en sombre via le bouton thème s'il le souhaite.)
-            if (themeId === 'zapier') {
-                document.body.classList.remove('dark-mode');
-                try { localStorage.setItem('luxepos_theme', 'light'); } catch (e) {}
-            }
             window.store.save();
             this.applyVisualSettings();
             this.toast?.(`Thème "${themeId}" appliqué`);
@@ -14292,13 +14218,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                             <div class="text-xs uppercase tracking-wider opacity-60 font-bold mb-3">Thème de couleur</div>
                             <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="v48-theme-picker">
                                 ${[
-                                    { id: 'zapier', label: 'Zapier', color1: '#ff4f00', color2: '#201515' },
-                                    { id: 'emerald', label: 'Émeraude (défaut)', color1: '#10b981', color2: '#059669' },
-                                    { id: 'rose-gold', label: 'Or rose', color1: '#e11d74', color2: '#be185d' },
-                                    { id: 'champagne', label: 'Champagne', color1: '#c9a227', color2: '#a16207' },
-                                    { id: 'onyx', label: 'Onyx', color1: '#475569', color2: '#1e293b' },
-                                    { id: 'sapphire', label: 'Saphir', color1: '#3b82f6', color2: '#1d4ed8' },
-                                    { id: 'ruby', label: 'Rubis', color1: '#dc2626', color2: '#991b1b' }
+                                    { id: 'emerald', label: 'Émeraude', color1: '#10b981', color2: '#059669' },
+                                    { id: 'rosegold', label: 'Or rose', color1: '#f59e0b', color2: '#ec4899' },
+                                    { id: 'champagne', label: 'Champagne', color1: '#eab308', color2: '#ca8a04' },
+                                    { id: 'onyx', label: 'Onyx', color1: '#64748b', color2: '#1e293b' },
+                                    { id: 'royal', label: 'Royal', color1: '#8b5cf6', color2: '#6366f1' }
                                 ].map(t => {
                                     const active = (window.store.state.settings.colorTheme || 'emerald') === t.id;
                                     return `
@@ -14525,40 +14449,28 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                         </div>
                     </div>
 
-                    <!-- v5.14.27 — Photos des bijoux : import dossier client-side (marche partout :
-                         app installée, PWA, en ligne) + auto-link serveur en option avancée. -->
+                    <!-- v5.9 — Photos automatiques (depuis dossier Z0. STOCK 2026) -->
                     <div class="glass-panel p-8 rounded-2xl space-y-6">
                         <div class="flex items-center gap-3 border-b border-white/10 pb-4 mb-6">
-                            <div class="p-2 rounded-lg" style="background: color-mix(in oklab, var(--brand-main) 18%, transparent);">
-                                <i data-lucide="image" class="w-5 h-5" style="color: var(--brand-main);"></i>
+                            <div class="p-2 bg-pink-500/20 rounded-lg">
+                                <i data-lucide="image" class="text-pink-400 w-5 h-5"></i>
                             </div>
                             <div class="flex-1">
                                 <h3 class="text-xl font-semibold">Photos des bijoux</h3>
-                                <p class="text-xs text-adaptive-tertiary mt-1">Importez vos photos depuis un dossier : chaque image est reliée au produit dont la <strong>référence</strong> correspond au nom du fichier (ex : <code style="background:var(--bg-tertiary); padding:1px 6px; border-radius:4px;">B179.jpg</code> → produit <code>B179</code>), puis <strong>compressée automatiquement</strong> pour rester légère. Fonctionne partout (app installée, en ligne, hors-ligne).</p>
+                                <p class="text-xs text-adaptive-tertiary mt-1">Associe automatiquement les photos du dossier <code style="background:var(--bg-tertiary); padding:1px 6px; border-radius:4px;">Z0. STOCK 2026</code> à chaque produit, par référence (ex : <code>B179.jpg</code> → produit avec réf <code>B179</code>).</p>
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
-                            <button onclick="window.ui.openBulkPhotoImport()" class="btn-2026 primary">
-                                <i data-lucide="folder-up" class="w-4 h-4"></i>
-                                Importer des photos (choisir un dossier)
+                            <button onclick="window.ui.runAutoLinkPhotos(false)" class="btn-2026 primary" style="background: linear-gradient(135deg, #ec4899, #be185d);">
+                                <i data-lucide="image-plus" class="w-4 h-4"></i>
+                                Associer les photos manquantes
+                            </button>
+                            <button onclick="window.ui.runAutoLinkPhotos(true)" class="btn-2026 secondary" title="Réassocie même les produits qui ont déjà une photo personnalisée">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                Tout réassocier (force)
                             </button>
                         </div>
-                        <!-- Option avancée : auto-link depuis le dossier Z0 (mode serveur local uniquement) -->
-                        <details style="border:1px dashed var(--border-color); border-radius:var(--radius-md); padding:0;">
-                            <summary style="cursor:pointer; padding:10px 14px; font-size:0.78rem; opacity:0.7;">⚙️ Option avancée : association auto depuis le dossier « Z0. STOCK 2026 »</summary>
-                            <div style="padding:12px 14px; border-top:1px solid var(--border-color);">
-                                <p class="text-xs text-adaptive-tertiary mb-3">Ne fonctionne que si l'app est lancée via un <strong>serveur local</strong> depuis le dossier LuxePOS-Web (ex : <code>Lancer-LuxePOS.bat</code>). Sur l'app installée ou en ligne, utilisez « Importer des photos » ci-dessus.</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button onclick="window.ui.runAutoLinkPhotos(false)" class="btn-2026 secondary">
-                                        <i data-lucide="image-plus" class="w-4 h-4"></i> Associer les manquantes
-                                    </button>
-                                    <button onclick="window.ui.runAutoLinkPhotos(true)" class="btn-2026 ghost" title="Réassocie même les produits qui ont déjà une photo personnalisée">
-                                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Tout réassocier
-                                    </button>
-                                </div>
-                                <div id="auto-link-result" class="text-sm mt-3" style="display:none;"></div>
-                            </div>
-                        </details>
+                        <div id="auto-link-result" class="text-sm" style="display:none;"></div>
                     </div>
 
                     <!-- v5.0 — 🚀 Application (PWA install / standalone) -->
@@ -18173,7 +18085,7 @@ service cloud.firestore {
                     </div>
 
                     <div class="flex gap-2 justify-center pt-2 flex-wrap">
-                        <button onclick="document.getElementById('import-excel-modal').remove(); window.router.navigate('dashboard'); setTimeout(() => window.ui.maybeShowOnboarding?.(), 600);" class="px-5 py-2 rounded-lg bg-brand text-white hover:opacity-90 transition-opacity">✨ Découvrir LuxePOS</button>
+                        <button onclick="document.getElementById('import-excel-modal').remove(); window.router.navigate('dashboard'); setTimeout(() => window.ui.maybeShowOnboarding?.(), 600);" class="px-5 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">✨ Découvrir LuxePOS</button>
                         <button onclick="document.getElementById('import-excel-modal').remove(); window.router.navigate('inventory');" class="px-5 py-2 rounded-lg border dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">Voir l'inventaire</button>
                         <button onclick="window.ui.exportBackupJSON?.();" class="px-5 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">💾 Télécharger .json</button>
                     </div>
@@ -28059,39 +27971,14 @@ td{padding:12px;border-bottom:1px solid #eee}
                 if (window.lucide) lucide.createIcons();
                 const progressEl = loadingModal.querySelector('#bulk-progress');
 
-                // Index produits par référence : exact + normalisé (alphanumérique) + liste pour fuzzy
+                // Index produits par référence (uppercase, sans accents)
                 const products = window.store.state.products || [];
-                const refIndex = new Map();     // clé exacte (uppercase, trim)
-                const normIndex = new Map();    // clé normalisée (A-Z0-9 uniquement)
-                const refList = [];             // [{norm, product}] pour le matching par sous-chaîne
+                const refIndex = new Map();
                 for (const p of products) {
                     if (p.reference && !p.archived) {
-                        const key = String(p.reference).toUpperCase().trim();
-                        const norm = key.replace(/[^A-Z0-9]/g, '');
-                        refIndex.set(key, p);
-                        if (norm && !normIndex.has(norm)) normIndex.set(norm, p);
-                        if (norm) refList.push({ norm, product: p });
+                        refIndex.set(String(p.reference).toUpperCase().trim(), p);
                     }
                 }
-                // v5.15.0 — résout un produit depuis une réf extraite : exact → normalisé → sous-chaîne (fuzzy)
-                const resolveProduct = (ref, fileName) => {
-                    if (!ref) return null;
-                    let p = refIndex.get(ref);
-                    if (p) return p;
-                    const refNorm = ref.replace(/[^A-Z0-9]/g, '');
-                    p = normIndex.get(refNorm);
-                    if (p) return p;
-                    // Fuzzy : la réf produit normalisée est contenue dans le nom de fichier normalisé.
-                    // On garde la correspondance la plus longue pour éviter B4 ⊂ B44.
-                    const fnameNorm = String(fileName).toUpperCase().replace(/\.[A-Z0-9]+$/, '').replace(/[^A-Z0-9]/g, '');
-                    let best = null;
-                    for (const r of refList) {
-                        if (r.norm.length >= 3 && fnameNorm.includes(r.norm)) {
-                            if (!best || r.norm.length > best.norm.length) best = r;
-                        }
-                    }
-                    return best ? best.product : null;
-                };
 
                 // Catégorise les fichiers
                 const matched = [];        // {file, product, hadImage, dataUrl}
@@ -28099,8 +27986,8 @@ td{padding:12px;border-bottom:1px solid #eee}
                 let processed = 0;
                 for (const file of imageFiles) {
                     processed++;
-                    if (processed % 3 === 0) {
-                        progressEl.textContent = `${processed}/${imageFiles.length} analysées…`;
+                    if (processed % 5 === 0) {
+                        progressEl.textContent = `${processed}/${imageFiles.length} analysées`;
                         await new Promise(r => setTimeout(r, 0)); // yield to keep UI responsive
                     }
                     const ref = window.extractRefFromFilename(file.name);
@@ -28108,7 +27995,7 @@ td{padding:12px;border-bottom:1px solid #eee}
                         unmatched.push({ file, extractedRef: null });
                         continue;
                     }
-                    const product = resolveProduct(ref, file.name);
+                    const product = refIndex.get(ref);
                     if (!product) {
                         unmatched.push({ file, extractedRef: ref });
                         continue;
@@ -28227,26 +28114,6 @@ td{padding:12px;border-bottom:1px solid #eee}
 
                 reportModal.querySelector('#bulk-confirm').addEventListener('click', () => {
                     try {
-                        // v5.15.0 — Garde-fou quota : estime le poids ajouté par les nouvelles images
-                        // (dataURLs base64) avant de committer, pour éviter un QuotaExceededError
-                        // silencieux qui laisserait le state à moitié sauvé.
-                        const addedBytes = matched.reduce((sum, m) => sum + (m.dataUrl ? m.dataUrl.length : 0), 0);
-                        const addedMB = addedBytes / (1024 * 1024);
-                        let currentMB = 0;
-                        try { currentMB = (window.store._lastSerialized?.length || JSON.stringify(window.store.state).length) / (1024 * 1024); } catch (e) {}
-                        const projectedMB = currentMB + addedMB;
-                        // Seuil prudent : au-delà de ~45 MB on approche de la limite Tauri (50 MB) et on
-                        // dépasse largement localStorage. On prévient avant d'écrire.
-                        if (projectedMB > 45) {
-                            const proceed = window.confirm(
-                                `⚠️ Attention : ces ${matched.length} photos ajouteraient ~${addedMB.toFixed(1)} Mo, portant le total à ~${projectedMB.toFixed(1)} Mo.\n\n` +
-                                `Cela risque de dépasser la limite de stockage (50 Mo) et d'échouer la sauvegarde.\n\n` +
-                                `Conseils : importez par lots plus petits, ou exportez d'abord une sauvegarde .json.\n\n` +
-                                `Voulez-vous quand même continuer ?`
-                            );
-                            if (!proceed) return;
-                        }
-
                         // Snapshot avant modification
                         window.store._snapshotBefore?.('Avant import photos en masse', { count: matched.length });
 

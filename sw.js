@@ -1,7 +1,9 @@
-// LuxePOS Service Worker v4.7
+// LuxePOS Service Worker v4.8
 // Stratégie : Cache-First pour CDN + app shell, Network-First pour les données
+// v4.8 — photo-map.json et données JSON locales : network-only, JAMAIS de fallback
+//        HTML (évite l'erreur "Unexpected token '<'") + bump cache pour purge.
 
-const CACHE = 'luxepos-v4-7';
+const CACHE = 'luxepos-v4-8';
 const APP_SHELL = [
     './',
     './luxepos-final.html'
@@ -50,6 +52,22 @@ self.addEventListener('fetch', e => {
     // Firebase : toujours network-first (données en temps réel)
     if (/firestore\.googleapis|firebaseio/.test(url.hostname)) {
         return; // laisse le navigateur gérer
+    }
+
+    // v4.8 — photo-map.json (et tout .json local de données) : NETWORK-ONLY.
+    // On ne met JAMAIS ce fichier en cache et on ne renvoie JAMAIS l'app-shell HTML
+    // en fallback : sinon JSON.parse reçoit du HTML → "Unexpected token '<'".
+    // En cas d'échec réseau, on renvoie un 503 JSON propre que l'app sait gérer.
+    if (url.pathname.endsWith('photo-map.json')) {
+        e.respondWith(
+            fetch(req, { cache: 'no-store' }).catch(() =>
+                new Response('{"error":"offline"}', {
+                    status: 503,
+                    headers: { 'Content-Type': 'application/json' }
+                })
+            )
+        );
+        return;
     }
 
     // CDN : cache-first avec fallback network + mise en cache
